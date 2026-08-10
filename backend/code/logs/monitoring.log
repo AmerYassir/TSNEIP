@@ -569,3 +569,4 @@ TypeError: OSMWidget.__init__() got an unexpected keyword argument 'default_zoom
 [INFO] 2026-08-10 22:01:52,277 monitoring: Starting subdomain database seed process...
 [INFO] 2026-08-10 22:01:52,309 monitoring: Successfully seeded 5 subdomains (5 new created).
 [INFO] 2026-08-10 22:09:55,880 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-10 22:25:25,122 django.utils.autoreload: Watching for file changes with StatReloader
