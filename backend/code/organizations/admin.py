@@ -4,7 +4,7 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 
 from .models import Organization
 from .serializers import OrganizationSerializer
-
+from django.utils.translation import gettext_lazy as _
 logger = logging.getLogger("monitoring")
 
 
@@ -34,4 +34,4 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         org = serializer.save()
-        logger.info(f"Created Organization id={org.id} name='{org.name}' code='{org.code}'")
+        logger.info(_("Created Organization id={org.id} name='{org.name}' code='{org.code}'".format(org=org)))

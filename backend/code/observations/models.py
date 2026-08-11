@@ -4,31 +4,52 @@ import uuid
 from django.contrib.gis.db import models as gis_models
 from django.db import models
 from django.db.models import Q
-
+from django.utils.translation import gettext_lazy as _
 
 class DomainChoices(models.TextChoices):
-    WATER = "WATER", "Water Resources"
-    AIR = "AIR", "Air & Climate"
-    SOIL = "SOIL", "Soil & Land"
-    ECOLOGY = "ECOLOGY", "Ecology & Vegetation"
-    URBAN = "URBAN", "Urban & Waste"
+    WATER = "WATER", _("Water Resources")
+    AIR = "AIR", _("Air & Climate")
+    SOIL = "SOIL", _("Soil & Land")
+    ECOLOGY = "ECOLOGY", _("Ecology & Vegetation")
+    URBAN = "URBAN", _("Urban & Waste")
 
 
 class ObservationSubdomain(models.Model):
     """
     Subdomain categorization lookup with pre-configured parameter definitions.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    domain = models.CharField(max_length=50, choices=DomainChoices.choices, db_index=True)
-    name = models.CharField(max_length=100, unique=True)
-    sdg_alignment = models.CharField(max_length=20, blank=True, null=True, help_text="e.g. SDG 6.3.2")
-    
+    id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4, 
+        editable=False,
+        verbose_name=_("Subdomain ID")
+    )
+    domain = models.CharField(
+        max_length=50,
+        choices=DomainChoices.choices,
+        verbose_name=_("Domain")
+    )
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name=_("Subdomain Name")
+    )
+    sdg_alignment = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_("e.g. SDG 6.3.2"),
+        verbose_name=_("SDG Alignment")
+    )
+
     # JSON schema defining required/optional metrics for field form generation
     # Example: [{"code": "pH", "label": "pH Level", "unit": "pH", "type": "number", "required": true}]
     metric_template = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["domain", "name"]
+        verbose_name = _("Observation Subdomain")
+        verbose_name_plural = _("Observation Subdomains")
 
     def __str__(self):
         return f"{self.get_domain_display()} -> {self.name}"
@@ -78,6 +99,8 @@ class GeoObservation(gis_models.Model):
 
     class Meta:
         ordering = ["-observation_time"]
+        verbose_name = _("Geo Observation")
+        verbose_name_plural = _("Geo Observations")
 
     def __str__(self):
         return f"{self.title} ({self.subdomain.name})"
@@ -93,10 +116,27 @@ class MetricReading(models.Model):
         on_delete=models.CASCADE, 
         related_name="readings"
     )
-    parameter_code = models.CharField(max_length=50, help_text="e.g. pH, NO2, Turbidity")
-    numeric_value = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
-    text_value = models.CharField(max_length=255, null=True, blank=True)
-    unit = models.CharField(max_length=30)
+    parameter_code = models.CharField(
+        max_length=50,
+        help_text=_("e.g. pH, NO2, Turbidity"),
+        verbose_name=_("Parameter Code")
+    )
+    numeric_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name=_("Numeric Value")
+    )
+    text_value = models.CharField(
+        max_length=255,
+        null=True, blank=True,
+        verbose_name=_("Text Value")
+    )
+    unit = models.CharField(
+        max_length=30,
+        verbose_name=_("Unit")
+    )
 
     class Meta:
         constraints = [

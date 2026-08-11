@@ -3,7 +3,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from .models import GeoObservation, MetricReading, ObservationSubdomain
-
+from django.utils.translation import gettext_lazy as _
 
 class ObservationSubdomainSerializer(serializers.ModelSerializer):
     """
@@ -35,7 +35,7 @@ class MetricReadingSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs.get("numeric_value") is None and not attrs.get("text_value"):
             raise serializers.ValidationError(
-                "Either 'numeric_value' or 'text_value' must be provided for each reading."
+                _("Either 'numeric_value' or 'text_value' must be provided for each reading.")
             )
         return attrs
 
