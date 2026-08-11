@@ -570,3 +570,49 @@ TypeError: OSMWidget.__init__() got an unexpected keyword argument 'default_zoom
 [INFO] 2026-08-10 22:01:52,309 monitoring: Successfully seeded 5 subdomains (5 new created).
 [INFO] 2026-08-10 22:09:55,880 django.utils.autoreload: Watching for file changes with StatReloader
 [INFO] 2026-08-10 22:25:25,122 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-10 22:28:48,561 django.utils.autoreload: /app/organizations/models.py changed, reloading.
+[INFO] 2026-08-10 22:28:48,870 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-10 22:28:58,018 django.utils.autoreload: /app/organizations/models.py changed, reloading.
+[INFO] 2026-08-10 22:28:58,303 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-10 22:29:56,815 django.utils.autoreload: /app/organizations/admin.py changed, reloading.
+[INFO] 2026-08-10 22:29:57,207 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-10 22:30:12,392 django.utils.autoreload: /app/config/urls.py changed, reloading.
+[INFO] 2026-08-10 22:30:12,782 django.utils.autoreload: Watching for file changes with StatReloader
+[ERROR] 2026-08-11 07:17:09,482 celery.utils.dispatch.signal: Signal handler <bound method DjangoFixup.on_import_modules of <celery.fixups.django.DjangoFixup object at 0x7f9df1f66f90>> raised: ImproperlyConfigured("The included URLconf '<module 'organizations.urls' from '/app/organizations/urls.py'>' does not appear to have any patterns in it. If you see the 'urlpatterns' variable with valid patterns in the file then the issue is probably caused by a circular import.")
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/django/urls/resolvers.py", line 731, in url_patterns
+    iter(patterns)
+    ~~~~^^^^^^^^^^
+TypeError: 'module' object is not iterable
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/celery/utils/dispatch/signal.py", line 280, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "/usr/local/lib/python3.13/site-packages/celery/fixups/django.py", line 103, in on_import_modules
+    self.worker_fixup.validate_models()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/celery/fixups/django.py", line 154, in validate_models
+    run_checks()
+    ~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/django/core/checks/registry.py", line 99, in run_checks
+    new_errors = check(app_configs=app_configs, databases=databases)
+  File "/usr/local/lib/python3.13/site-packages/django/core/checks/urls.py", line 16, in check_url_config
+    return check_resolver(resolver)
+  File "/usr/local/lib/python3.13/site-packages/django/core/checks/urls.py", line 26, in check_resolver
+    return check_method()
+  File "/usr/local/lib/python3.13/site-packages/django/urls/resolvers.py", line 542, in check
+    messages.extend(check_resolver(pattern))
+                    ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/django/core/checks/urls.py", line 26, in check_resolver
+    return check_method()
+  File "/usr/local/lib/python3.13/site-packages/django/urls/resolvers.py", line 541, in check
+    for pattern in self.url_patterns:
+                   ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ~~~~~~~~~^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/django/urls/resolvers.py", line 739, in url_patterns
+    raise ImproperlyConfigured(msg.format(name=self.urlconf_name)) from e
+django.core.exceptions.ImproperlyConfigured: The included URLconf '<module 'organizations.urls' from '/app/organizations/urls.py'>' does not appear to have any patterns in it. If you see the 'urlpatterns' variable with valid patterns in the file then the issue is probably caused by a circular import.
