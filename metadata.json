@@ -1,0 +1,6 @@
+{
+  "name": "TSNEIP — Syrian National Ecosystem Platform",
+  "description": "Central Geographic Data Collection & Environmental GIS Information System for AlTatweer Environment Foundation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

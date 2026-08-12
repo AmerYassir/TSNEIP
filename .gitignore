@@ -1,17 +1,17 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+# IDE
+.vscode/
+.idea/
+*.swp
 
-# Virtual environments
-.venv
-
-#env
+# Env
 .env
-.env.prod
+.env.local
 
-#logs
-*.log
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Monorepo
+node_modules/
+dist/
