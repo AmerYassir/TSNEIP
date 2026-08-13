@@ -1,9 +1,10 @@
 from django.contrib.gis import admin
 from .models import AdministrativeUnit
+from modeltranslation.admin import TabbedTranslationAdmin
 
 
 @admin.register(AdministrativeUnit)
-class AdministrativeUnitAdmin(admin.GISModelAdmin):
+class AdministrativeUnitAdmin(admin.GISModelAdmin, TabbedTranslationAdmin):
     """
     GIS Admin configuration for Administrative Boundaries with OpenLayers map widget.
     """

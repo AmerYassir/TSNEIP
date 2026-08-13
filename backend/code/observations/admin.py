@@ -1,9 +1,9 @@
 from django.contrib.gis import admin
 from .models import GeoObservation
-
+from modeltranslation.admin import TabbedTranslationAdmin
 
 @admin.register(GeoObservation)
-class GeoObservationAdmin(admin.GISModelAdmin):
+class GeoObservationAdmin(TabbedTranslationAdmin,admin.GISModelAdmin):
     """
     GIS Admin configuration for GeoObservations.
     """

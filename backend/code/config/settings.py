@@ -17,6 +17,10 @@ from decouple import config, Csv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+
 LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
@@ -50,12 +54,15 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "django.contrib.postgres",
     "rest_framework",
+    'rest_framework_simplejwt',
     "locations",
     "organizations",
     "observations",
     "interventions",
+    "users",
 ]
 
+AUTH_USER_MODEL = "users.User"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -127,12 +134,12 @@ AUTH_PASSWORD_VALIDATORS = [
 USE_I18N = True
 # LANGUAGE_CODE = 'en'
 LANGUAGES = [
-    ('en', 'English'),
     ('ar', 'Arabic'),
+    ('en', 'English'),
 ]
 
 MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
-MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'ar')
+MODELTRANSLATION_FALLBACK_LANGUAGES = ('ar', 'en')
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -246,3 +253,5 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

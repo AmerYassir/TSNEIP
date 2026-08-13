@@ -71,7 +71,8 @@ class GeoObservation(gis_models.Model):
     subdomain = models.ForeignKey(
         ObservationSubdomain, 
         on_delete=models.PROTECT, 
-        related_name="observations"
+        related_name="observations",
+        verbose_name=_("Subdomain")
     )
     
     # GeoDjango spatial field (EPSG:4326 for standard Lat/Lng)
@@ -83,7 +84,8 @@ class GeoObservation(gis_models.Model):
         max_length=20, 
         choices=StatusChoices.choices, 
         default=StatusChoices.DRAFT,
-        db_index=True
+        db_index=True,
+        verbose_name=_("Status")
     )
     
     # Optional auto-resolved location relation (can be set via spatial signal later)
@@ -92,7 +94,8 @@ class GeoObservation(gis_models.Model):
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        related_name="observations"
+        related_name="observations",
+        verbose_name=_("Administrative Unit")
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
