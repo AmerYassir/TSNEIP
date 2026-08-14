@@ -1,9 +1,13 @@
 import logging
 from rest_framework import permissions, viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
+from common.pagination import StandardGeoJsonPagination
 from .models import GeoObservation, ObservationSubdomain
-from .serializers import GeoObservationSerializer, ObservationSubdomainSerializer
+from .serializers import GeoObservationSerializer, ObservationSubdomainSerializer, GeoObservationGeoSerializer
 
 logger = logging.getLogger("monitoring")
 
@@ -61,4 +65,55 @@ class GeoObservationViewSet(viewsets.ModelViewSet):
             f"Created GeoObservation id={observation.id} "
             f"subdomain='{observation.subdomain.name}' "
             f"readings_count={observation.readings.count()}"
+        )
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def claim(self, request, pk=None):
+        observation = self.get_object()
+        if observation.status != GeoObservation.StatusChoices.SUBMITTED:
+            return Response(
+                {"detail": "Only SUBMITTED items can be claimed."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        observation.claim(user=request.user)
+        return Response({"status": "UNDER_REVIEW", "reviewed_by": request.user.email})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def approve(self, request, pk=None):
+        observation = self.get_object()
+        observation.approve(user=request.user)
+        return Response({"status": "APPROVED"})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reject(self, request, pk=None):
+        observation = self.get_object()
+        reason = request.data.get("reason", "")
+        if not reason:
+            return Response(
+                {"reason": "A rejection reason is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        observation.reject(user=request.user, reason=reason)
+        return Response({"status": "REJECTED", "rejection_reason": reason})
+    
+
+class GeoObservationMapViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = GeoObservationGeoSerializer
+    pagination_class = StandardGeoJsonPagination
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # 1. Anonymous / Guest Users: Only see official APPROVED map features
+        if not user or user.is_anonymous:
+            return GeoObservation.objects.filter(status='APPROVED')
+
+        # 2. Staff / Admins: Optional check to view everything across all statuses
+        if user.is_staff or user.is_superuser:
+            return GeoObservation.objects.all()
+
+        # 3. Authenticated Regular Users:
+        # See all APPROVED features PLUS their own items regardless of status (DRAFT, SUBMITTED, etc.)
+        return GeoObservation.objects.filter(
+            Q(status='APPROVED') | Q(created_by=user)
         )

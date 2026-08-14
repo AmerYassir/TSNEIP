@@ -1,6 +1,7 @@
 from django.contrib.gis.geos import Point
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from .models import GeoObservation, MetricReading, ObservationSubdomain
 from django.utils.translation import gettext_lazy as _
@@ -22,6 +23,7 @@ class ObservationSubdomainSerializer(serializers.ModelSerializer):
             "sdg_alignment",
             "metric_template",
         ]
+        read_only_fields = ('status',)
 
 
 class MetricReadingSerializer(serializers.ModelSerializer):
@@ -90,3 +92,9 @@ class GeoObservationSerializer(serializers.ModelSerializer):
                 MetricReading.objects.bulk_create(metric_instances)
 
         return observation
+
+class GeoObservationGeoSerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = GeoObservation
+        geo_field = 'location'
+        fields = ('id', 'status', 'observation_time', 'created_at')
