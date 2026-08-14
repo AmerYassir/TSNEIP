@@ -8,6 +8,9 @@ from rest_framework.permissions import IsAuthenticated
 from common.pagination import StandardGeoJsonPagination
 from .models import GeoObservation, ObservationSubdomain
 from .serializers import GeoObservationSerializer, ObservationSubdomainSerializer, GeoObservationGeoSerializer
+from .permissions import CanAccessObservationData,CanExecuteReviewAction, CanManageContentAndReports
+from django.db.models import Q
+
 
 logger = logging.getLogger("monitoring")
 
@@ -42,7 +45,7 @@ class GeoObservationViewSet(viewsets.ModelViewSet):
         .all()
     )
     serializer_class = GeoObservationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CanAccessObservationData]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ["title", "subdomain__name"]
     ordering_fields = ["observation_time", "created_at"]
@@ -61,13 +64,15 @@ class GeoObservationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         observation = serializer.save()
+        serializer.save(created_by=self.request.user)
         logger.info(
             f"Created GeoObservation id={observation.id} "
             f"subdomain='{observation.subdomain.name}' "
             f"readings_count={observation.readings.count()}"
+            f"created_by='{observation.created_by.email}'"
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[CanExecuteReviewAction])
     def claim(self, request, pk=None):
         observation = self.get_object()
         if observation.status != GeoObservation.StatusChoices.SUBMITTED:
@@ -78,13 +83,13 @@ class GeoObservationViewSet(viewsets.ModelViewSet):
         observation.claim(user=request.user)
         return Response({"status": "UNDER_REVIEW", "reviewed_by": request.user.email})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[CanExecuteReviewAction])
     def approve(self, request, pk=None):
         observation = self.get_object()
         observation.approve(user=request.user)
         return Response({"status": "APPROVED"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[CanExecuteReviewAction])
     def reject(self, request, pk=None):
         observation = self.get_object()
         reason = request.data.get("reason", "")
