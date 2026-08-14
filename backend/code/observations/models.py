@@ -6,6 +6,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
+from django.conf import settings
+
 class DomainChoices(models.TextChoices):
     WATER = "WATER", _("Water Resources")
     AIR = "AIR", _("Air & Climate")
@@ -87,7 +89,7 @@ class GeoObservation(gis_models.Model):
         db_index=True,
         verbose_name=_("Status")
     )
-    
+
     # Optional auto-resolved location relation (can be set via spatial signal later)
     admin_unit = models.ForeignKey(
         "locations.AdministrativeUnit", 
@@ -99,6 +101,36 @@ class GeoObservation(gis_models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='reviewed_observations'
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, default='')
+
+    # Transition Methods
+    def claim(self, user):
+        """Locks task for a specific reviewer."""
+        if self.status == self.StatusChoices.SUBMITTED:
+            self.status = self.StatusChoices.UNDER_REVIEW
+            self.reviewed_by = user
+            self.save(update_fields=['status', 'reviewed_by'])
+            
+
+    def submit_for_review(self):
+        """Called automatically when data collector completes entry."""
+        if self.status == self.StatusChoices.DRAFT:
+            self.status = self.StatusChoices.SUBMITTED
+            self.save(update_fields=['status'])
+
+    def approve(self):
+        """Reserved for future approval workflow / background worker."""
+        if self.status == self.StatusChoices.SUBMITTED:
+            self.status = self.StatusChoices.APPROVED
+            self.save(update_fields=['status'])
 
     class Meta:
         ordering = ["-observation_time"]

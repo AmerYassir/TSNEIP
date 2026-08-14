@@ -1799,3 +1799,84 @@ LINE 1: SELECT COUNT(*) AS "__count" FROM "interventions_interventio...
                                           ^
 [INFO] 2026-08-13 00:49:30,869 django.utils.autoreload: /app/config/settings.py changed, reloading.
 [INFO] 2026-08-13 00:49:31,194 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 14:45:43,526 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 14:46:05,824 django.utils.autoreload: /app/observations/admin.py changed, reloading.
+[INFO] 2026-08-14 14:46:06,189 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 14:47:19,875 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 14:47:20,197 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 14:57:00,576 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 14:57:00,926 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 14:57:38,164 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 14:57:38,456 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:23:24,342 django.utils.autoreload: /app/config/settings.py changed, reloading.
+[INFO] 2026-08-14 15:23:24,669 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:23:47,867 django.utils.autoreload: /app/config/settings.py changed, reloading.
+[INFO] 2026-08-14 15:23:48,155 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:40:00,379 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 15:40:00,722 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:41:15,076 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 15:41:15,408 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 15:43:10,864 django.request: Not Found: /api/v1/observations/1/
+[WARNING] 2026-08-14 15:43:19,105 django.request: Not Found: /favicon.ico
+[INFO] 2026-08-14 15:45:24,638 django.utils.autoreload: /app/observations/admin.py changed, reloading.
+[INFO] 2026-08-14 15:45:24,990 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:51:36,932 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 15:51:37,269 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:53:49,799 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 15:53:50,101 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:53:54,246 django.utils.autoreload: /app/observations/models.py changed, reloading.
+[INFO] 2026-08-14 15:53:54,595 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:55:12,329 django.utils.autoreload: /app/observations/admin.py changed, reloading.
+[INFO] 2026-08-14 15:55:12,685 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:56:57,558 django.utils.autoreload: /app/observations/admin.py changed, reloading.
+[INFO] 2026-08-14 15:56:57,876 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:56:59,391 monitoring: Starting subdomain database seed process...
+[INFO] 2026-08-14 15:56:59,419 monitoring: Successfully seeded 5 subdomains (5 new created).
+[INFO] 2026-08-14 15:59:37,264 django.utils.autoreload: /app/observations/urls.py changed, reloading.
+[INFO] 2026-08-14 15:59:37,615 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 15:59:56,930 django.utils.autoreload: /app/observations/urls.py changed, reloading.
+[INFO] 2026-08-14 15:59:57,256 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:02:19,331 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:02:23,056 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:02:37,231 django.request: Not Found: /api/v1/observations/subdomains/
+[INFO] 2026-08-14 16:02:45,705 django.utils.autoreload: /app/observations/urls.py changed, reloading.
+[INFO] 2026-08-14 16:02:46,106 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:02:47,194 django.request: Not Found: /api/v1/observations/subdomains/
+[INFO] 2026-08-14 16:03:28,563 django.utils.autoreload: /app/observations/urls.py changed, reloading.
+[INFO] 2026-08-14 16:03:28,926 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:04:06,408 django.request: Not Found: /api/v1/observations/mpas/
+[WARNING] 2026-08-14 16:04:09,005 django.request: Not Found: /api/v1/observations/maps/
+[WARNING] 2026-08-14 16:04:12,399 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:04:17,610 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:04:29,881 django.request: Not Found: /api/v1/observations/map/
+[INFO] 2026-08-14 16:05:18,933 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:05:19,266 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:05:22,922 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:05:23,585 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:05:24,119 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:05:29,134 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:05:29,854 django.request: Not Found: /api/v1/observations/map/
+[INFO] 2026-08-14 16:06:05,791 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:06:06,101 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 16:07:19,766 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:07:20,088 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:07:22,780 django.request: Not Found: /api/v1/observations/map/
+[INFO] 2026-08-14 16:08:51,928 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:08:52,279 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:09:07,358 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:09:18,681 django.request: Not Found: /api/v1/observations/map/
+[WARNING] 2026-08-14 16:09:20,101 django.request: Not Found: /api/v1/observations/map/
+[INFO] 2026-08-14 16:09:36,782 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:09:37,132 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:09:38,231 django.request: Not Found: /api/v1/observations/map/
+[INFO] 2026-08-14 16:14:34,471 django.utils.autoreload: /app/observations/urls.py changed, reloading.
+[INFO] 2026-08-14 16:14:34,821 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-14 16:15:42,151 django.request: Not Found: /api/v1/observations/1/
+[WARNING] 2026-08-14 16:15:44,647 django.request: Not Found: /api/v1/observations/0/
+[WARNING] 2026-08-14 16:15:47,377 django.request: Not Found: /api/v1/observations/2/
+[INFO] 2026-08-14 16:17:02,206 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:17:02,629 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 16:17:35,064 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:17:35,391 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-14 16:19:24,342 django.utils.autoreload: /app/observations/views.py changed, reloading.
+[INFO] 2026-08-14 16:19:24,729 django.utils.autoreload: Watching for file changes with StatReloader
