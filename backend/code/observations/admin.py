@@ -1,14 +1,15 @@
 from django.contrib.gis import admin
 from .models import GeoObservation, ObservationSubdomain
 from modeltranslation.admin import TabbedTranslationAdmin
+from guardian.admin import GuardedModelAdmin
 
 @admin.register(GeoObservation)
-class GeoObservationAdmin(TabbedTranslationAdmin,admin.GISModelAdmin):
+class GeoObservationAdmin(TabbedTranslationAdmin,GuardedModelAdmin,admin.GISModelAdmin):
     """
     GIS Admin configuration for GeoObservations.
     """
     list_display = ["id", "title", "location", "admin_unit", "created_at"]
-    list_filter = ["admin_unit"]
+    list_filter = ["admin_unit","status", "subdomain"]
     search_fields = ["title", "description"]
     raw_id_fields = ["admin_unit"]
     readonly_fields = ('status',)

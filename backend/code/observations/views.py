@@ -11,6 +11,8 @@ from .serializers import GeoObservationSerializer, ObservationSubdomainSerialize
 from .permissions import CanAccessObservationData,CanExecuteReviewAction, CanManageContentAndReports
 from django.db.models import Q
 
+from rest_framework.permissions import DjangoObjectPermissions
+from guardian.shortcuts import assign_perm, get_objects_for_user
 
 logger = logging.getLogger("monitoring")
 
@@ -45,32 +47,34 @@ class GeoObservationViewSet(viewsets.ModelViewSet):
         .all()
     )
     serializer_class = GeoObservationSerializer
-    permission_classes = [CanAccessObservationData]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ["title", "subdomain__name"]
     ordering_fields = ["observation_time", "created_at"]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        subdomain_id = self.request.query_params.get("subdomain")
-        status_param = self.request.query_params.get("status")
+        user = self.request.user
+        
+        # Superusers see all database rows
+        if user.is_superuser:
+            return GeoObservation.objects.all()
 
-        if subdomain_id:
-            queryset = queryset.filter(subdomain_id=subdomain_id)
-        if status_param:
-            queryset = queryset.filter(status=status_param)
-
-        return queryset
+        # Filter and return ONLY the specific rows the user has 'view' permission for
+        return get_objects_for_user(
+            user,
+            'observations.view_geoobservation',
+            klass=GeoObservation,
+            accept_global_perms=False  # Ignore table-level permissions if checking strictly row-level
+        )
 
     def perform_create(self, serializer):
-        observation = serializer.save()
-        serializer.save(created_by=self.request.user)
-        logger.info(
-            f"Created GeoObservation id={observation.id} "
-            f"subdomain='{observation.subdomain.name}' "
-            f"readings_count={observation.readings.count()}"
-            f"created_by='{observation.created_by.email}'"
-        )
+        # 1. Save the observation
+        observation = serializer.save(created_by=self.request.user)
+
+        # 2. Programmatically assign row-level permissions to the creator
+        assign_perm('view_geoobservation', self.request.user, observation)
+        assign_perm('change_geoobservation', self.request.user, observation)
+        assign_perm('delete_geoobservation', self.request.user, observation)
 
     @action(detail=True, methods=['post'], permission_classes=[CanExecuteReviewAction])
     def claim(self, request, pk=None):

@@ -19,15 +19,14 @@ from django.urls import path,include
 from django.conf.urls.i18n import i18n_patterns
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')),
     path('api/v1/observations/', include('observations.urls')),
     path('api/v1/locations/', include('locations.urls')),
     path('api/v1/organizations/', include('organizations.urls')),
     path('api/v1/users/', include('users.urls')),
-    path('i18n/', include('django.conf.urls.i18n')),
-
     path('api/v1/interventions/', include('interventions.urls')),
 ]
 urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
+    prefix_default_language=False,
 )

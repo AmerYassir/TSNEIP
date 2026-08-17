@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 from decouple import config, Csv
-
+from django.utils.translation import gettext_lazy as _
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "rest_framework",
     'rest_framework_simplejwt',
+    'guardian',
     "locations",
     "organizations",
     "observations",
@@ -79,13 +80,15 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.i18n',
             ],
         },
     },
@@ -131,11 +134,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-USE_I18N = True
-# LANGUAGE_CODE = 'en'
+
+LANGUAGE_CODE = 'en'
 LANGUAGES = [
-    ('ar', 'Arabic'),
-    ('en', 'English'),
+    ('ar', _('Arabic')),
+    ('en', _('English')),
 ]
 
 MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
@@ -233,7 +236,11 @@ LOGGING = {
         },
     },
 }
-
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # Default Django backend
+    'guardian.backends.ObjectPermissionBackend', # Guardian object-level backend
+)
+ANONYMOUS_USER_NAME = None
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [

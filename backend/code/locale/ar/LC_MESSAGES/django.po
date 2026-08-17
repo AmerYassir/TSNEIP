@@ -19,88 +19,79 @@ msgstr ""
 
 #: interventions/models.py:7
 msgid "Planned"
-msgstr ""
+msgstr "مخطط له"
 
 #: interventions/models.py:8
 msgid "In Progress"
-msgstr ""
+msgstr "قيد التنفيذ"
 
 #: interventions/models.py:9
 msgid "Completed"
-msgstr ""
+msgstr "مكتمل"
 
 #: interventions/models.py:10
 msgid "Suspended"
-msgstr ""
+msgstr "معلق"
 
 #: interventions/models.py:13
-#, fuzzy
-#| msgid "Ecology & Vegetation"
 msgid "Reforestation / Vegetation"
-msgstr "البيئة والغطاء النباتي"
+msgstr "إعادة التحريج / الغطاء النباتي"
 
 #: interventions/models.py:14
 msgid "Water Quality Restoration"
-msgstr ""
+msgstr "استعادة جودة المياه"
 
 #: interventions/models.py:15
 msgid "Waste & Pollution Removal"
-msgstr ""
+msgstr "إزالة النفايات والتلوث"
 
 #: interventions/models.py:16
 msgid "Habitat & Wildlife Protection"
-msgstr ""
+msgstr "حماية الموائل والحياة البرية"
 
 #: interventions/models.py:22
-#, fuzzy
-#| msgid "Organization"
 msgid "Responsible Organization"
-msgstr "المؤسسة"
+msgstr "الجهة المسؤولة"
 
 #: interventions/models.py:30
-#, fuzzy
-#| msgid "Geo Observation"
 msgid "Target Geo Observation"
-msgstr "رصد جغرافي"
+msgstr "الملاحظة الجغرافية المستهدفة"
 
 #: interventions/models.py:32
 msgid "Intervention Title"
-msgstr ""
+msgstr "عنوان التدخل"
 
 #: interventions/models.py:33
 msgid "Description / Scope of Work"
-msgstr ""
+msgstr "الوصف / نطاق العمل"
 
 #: interventions/models.py:37
-#, fuzzy
-#| msgid "Organization Type"
 msgid "Intervention Type"
-msgstr "نوع المؤسسة"
+msgstr "نوع التدخل"
 
 #: interventions/models.py:43 observations/models.py:88
 msgid "Status"
-msgstr ""
+msgstr "الحالة"
 
 #: interventions/models.py:46
 msgid "Location / Area Geometry"
-msgstr ""
+msgstr "الموقع / الهندسة الجغرافية"
 
 #: interventions/models.py:47
 msgid "Start Date"
-msgstr ""
+msgstr "تاريخ البدء"
 
 #: interventions/models.py:48
 msgid "End Date"
-msgstr ""
+msgstr "تاريخ الانتهاء"
 
 #: interventions/models.py:52
 msgid "Intervention"
-msgstr ""
+msgstr "تدخل"
 
 #: interventions/models.py:53
 msgid "Interventions"
-msgstr ""
-
+msgstr "التدخلات"
 #: locations/models.py:7
 msgid "Governorate / Level 1"
 msgstr "محافظة / المستوى 1"

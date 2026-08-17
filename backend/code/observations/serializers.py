@@ -2,9 +2,10 @@ from django.contrib.gis.geos import Point
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-
+from .permissions import UserRole, get_user_role
 from .models import GeoObservation, MetricReading, ObservationSubdomain
 from django.utils.translation import gettext_lazy as _
+from common.mixins import RoleFieldPermissionsMixin
 
 class ObservationSubdomainSerializer(serializers.ModelSerializer):
     """
@@ -42,7 +43,7 @@ class MetricReadingSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class GeoObservationSerializer(serializers.ModelSerializer):
+class GeoObservationSerializer(RoleFieldPermissionsMixin, serializers.ModelSerializer):
     """
     Atomic creation serializer handling Point conversion and nested bulk readings.
     """
