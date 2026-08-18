@@ -1,0 +1,66 @@
+services:
+  frontend:
+    build: ./frontend
+    image: frontend-app:latest
+    pull_policy: build
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src:z
+
+  backend:
+    build: ./backend
+    image: backend-app:latest
+    pull_policy: build
+    volumes:
+      - ./backend/code:/app:z
+    entrypoint: /app/scripts/backend_entrypoint.sh
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery_worker:
+    image: backend-app:latest
+    volumes:
+      - ./backend/code:/app:z
+    entrypoint: /app/scripts/worker_entrypoint.sh
+    command: python -m celery -A config worker -l info
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  db:
+    image: postgis/postgis:16-3.4
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
