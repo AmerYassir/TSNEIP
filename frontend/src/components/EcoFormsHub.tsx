@@ -4,13 +4,11 @@ import {
   SyrianGovernorate, 
   GeoPointRecord, 
   FormTemplateId, 
-  FormSubmissionRecord,
   LayerId
 } from '../types';
 import { translations } from '../data/translations';
 import { 
   FileText, 
-  Plus, 
   Leaf, 
   Droplets, 
   Trees, 
@@ -19,15 +17,16 @@ import {
   Save, 
   Eye, 
   CheckCircle2, 
-  Download, 
   MapPin, 
   Camera, 
-  Sparkles, 
-  Trash2, 
-  ArrowRight,
-  Printer,
-  FileCheck,
-  AlertCircle
+  Printer, 
+  AlertCircle,
+  Loader2,
+  Send,
+  User,
+  Users,
+  Layers,
+  Award
 } from 'lucide-react';
 
 interface EcoFormsHubProps {
@@ -36,6 +35,7 @@ interface EcoFormsHubProps {
   onOpenMapPicker: () => void;
   pickedLat?: number;
   pickedLng?: number;
+  apiEndpoint?: string; // Optional custom backend API URL (Defaults to /api/v1/observations/)
 }
 
 const GOVERNORATES: SyrianGovernorate[] = [
@@ -61,15 +61,20 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
   onOpenMapPicker,
   pickedLat,
   pickedLng,
+  apiEndpoint = '/api/v1/observations/',
 }) => {
   const t = translations[lang];
 
   // Selected template & view state
   const [activeTemplate, setActiveTemplate] = useState<FormTemplateId>('biodiversity');
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
+
+  // API Interaction States
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
 
-  // Form Field States
+  // Base Form Field States
   const [siteNameAr, setSiteNameAr] = useState<string>('');
   const [siteNameEn, setSiteNameEn] = useState<string>('');
   const [governorate, setGovernorate] = useState<SyrianGovernorate>('Latakia');
@@ -81,38 +86,40 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
   const [threatLevel, setThreatLevel] = useState<'low' | 'moderate' | 'high' | 'critical'>('moderate');
   const [notesAr, setNotesAr] = useState<string>('');
   const [notesEn, setNotesEn] = useState<string>('');
-  const [photoUrl, setPhotoUrl] = useState<string>('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=600&q=80');
+  const [photoUrl, setPhotoUrl] = useState<string>(
+    'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=600&q=80'
+  );
 
-  // Specific Form Template Dynamic Details
-  // Biodiversity Template
+  // Specific Form Template Details
+  // 1. Biodiversity Template
   const [speciesNameAr, setSpeciesNameAr] = useState<string>('شوح سوري (Abies cilicica)');
   const [speciesCategory, setSpeciesCategory] = useState<string>('flora');
   const [populationCount, setPopulationCount] = useState<number>(120);
   const [biodiversityIndex, setBiodiversityIndex] = useState<number>(85);
 
-  // Water Quality Template
+  // 2. Water Quality Template
   const [waterBodyType, setWaterBodyType] = useState<string>('spring');
   const [waterPh, setWaterPh] = useState<number>(7.6);
   const [waterSalinityPpm, setWaterSalinityPpm] = useState<number>(320);
   const [dischargeRate, setDischargeRate] = useState<number>(3.5);
 
-  // Soil & Forest Degradation Template
+  // 3. Soil & Forest Degradation Template
   const [erosionType, setErosionType] = useState<string>('water_runoff');
   const [soilOrganicContent, setSoilOrganicContent] = useState<number>(4.8);
   const [burnedHectares, setBurnedHectares] = useState<number>(0);
   const [replantedSaplings, setReplantedSaplings] = useState<number>(500);
 
-  // Syrian Demographic Eco-Impact Template
+  // 4. Syrian Demographic Eco-Impact Template
   const [householdCount, setHouseholdCount] = useState<number>(450);
   const [primaryFuel, setPrimaryFuel] = useState<string>('solar_hybrid');
   const [wellReliancePercent, setWellReliancePercent] = useState<number>(65);
 
-  // Protected Reserve Incident Template
+  // 5. Protected Reserve Incident Template
   const [reserveName, setReserveName] = useState<string>('محمية غابات الفرنلق');
   const [incidentType, setIncidentType] = useState<string>('logging_prevention');
   const [patrolSquadId, setPatrolSquadId] = useState<string>('SQUAD-ALPHA-04');
 
-  // Update Lat/Lng if user picked coordinates on the map
+  // Update Lat/Lng when map picker returns new coordinates
   useEffect(() => {
     if (pickedLat !== undefined && pickedLng !== undefined) {
       setLat(pickedLat);
@@ -120,67 +127,174 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
     }
   }, [pickedLat, pickedLng]);
 
-  // Handle Form Submission
-  const handleSubmitForm = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    let layerId: LayerId = 'biodiversity';
-    let metrics: GeoPointRecord['metrics'] = {};
-
-    if (activeTemplate === 'biodiversity') {
-      layerId = 'biodiversity';
-      metrics = { biodiversityIndex, ambientTempC: 25.0 };
-    } else if (activeTemplate === 'water_quality') {
-      layerId = 'water_resources';
-      metrics = { waterPh, waterSalinityPpm };
-    } else if (activeTemplate === 'soil_forest') {
-      layerId = 'field_surveys';
-      metrics = { soilOrganicContent, ndvi: 0.65 };
-    } else if (activeTemplate === 'demographic_impact') {
-      layerId = 'air_quality';
-      metrics = { airQualityIndex: 45, ambientTempC: 28.0 };
-    } else if (activeTemplate === 'protected_area') {
-      layerId = 'env_baseline';
-      metrics = { biodiversityIndex: 90 };
+  // Construct metric object based on active template
+  const buildTemplateMetrics = () => {
+    switch (activeTemplate) {
+      case 'biodiversity':
+        return { layerId: 'biodiversity' as LayerId, metrics: { biodiversityIndex, ambientTempC: 25.0 } };
+      case 'water_quality':
+        return { layerId: 'water_resources' as LayerId, metrics: { waterPh, waterSalinityPpm, dischargeRate } };
+      case 'soil_forest':
+        return { layerId: 'field_surveys' as LayerId, metrics: { soilOrganicContent, burnedHectares, replantedSaplings, ndvi: 0.65 } };
+      case 'demographic_impact':
+        return { layerId: 'air_quality' as LayerId, metrics: { airQualityIndex: 45, wellReliancePercent, ambientTempC: 28.0 } };
+      case 'protected_area':
+        return { layerId: 'env_baseline' as LayerId, metrics: { biodiversityIndex: 90 } };
+      default:
+        return { layerId: 'field_surveys' as LayerId, metrics: {} };
     }
+  };
 
-    const newRecordId = `SY-FORM-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+  // Build specific detail payload for backend JSONField
+  const buildTemplateDetails = () => {
+    switch (activeTemplate) {
+      case 'biodiversity':
+        return { speciesNameAr, speciesCategory, populationCount, biodiversityIndex };
+      case 'water_quality':
+        return { waterBodyType, waterPh, waterSalinityPpm, dischargeRate };
+      case 'soil_forest':
+        return { erosionType, soilOrganicContent, burnedHectares, replantedSaplings };
+      case 'demographic_impact':
+        return { householdCount, primaryFuel, wellReliancePercent };
+      case 'protected_area':
+        return { reserveName, incidentType, patrolSquadId };
+      default:
+        return {};
+    }
+  };
 
-    const newRecord: GeoPointRecord = {
-      id: newRecordId,
-      siteNameAr: siteNameAr || (lang === 'ar' ? `استمارة بيئية جديدة - ${newRecordId}` : `New Eco Form Entry - ${newRecordId}`),
-      siteNameEn: siteNameEn || `Eco Form Submission ${newRecordId}`,
+  // Submit Form to REST API Backend
+  const handleSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccessMsg(null);
+
+    const { layerId, metrics } = buildTemplateMetrics();
+    const templateDetails = buildTemplateDetails();
+
+    // DRF Payload structure matching GeoJSON/Observation backend models
+    const payload = {
+      template_id: activeTemplate,
+      site_name_ar: siteNameAr || (lang === 'ar' ? `استمارة بيئية ميدانية` : `Field Survey Record`),
+      site_name_en: siteNameEn || `Eco Form Submission`,
       governorate,
-      lat,
-      lng,
+      latitude: lat,
+      longitude: lng,
       elevation,
-      layerId,
-      sdgTags: [
-        { id: 'sdg-15', code: 'SDG15', labelAr: 'الحياة في البر', labelEn: 'Life on Land', color: '#57B039' },
-        { id: 'sdg-13', code: 'SDG13', labelAr: 'العمل المناخي', labelEn: 'Climate Action', color: '#326B32' },
-      ],
-      verificationStatus: 'verified',
-      collectedDate: new Date().toISOString().split('T')[0],
-      collectorName: inspectorName,
-      collectorTeam: inspectorTeam,
+      location: {
+        type: 'Point',
+        coordinates: [lng, lat],
+      },
+      layer_id: layerId,
+      collector_name: inspectorName,
+      collector_team: inspectorTeam,
+      threat_level: threatLevel,
+      notes_ar: notesAr || 'تم تسجيل هذه الاستمارة عبر منصة TSNEIP.',
+      notes_en: notesEn || 'Registered via TSNEIP Field Survey Portal.',
+      image_url: photoUrl,
       metrics,
-      notesAr: notesAr || (lang === 'ar' ? 'تم تسجيل هذه الاستمارة عبر قسم النماذج المعتمدة لـ TSNEIP.' : 'Registered via TSNEIP Dedicated Eco-Form Templates Hub.'),
-      notesEn: notesEn || 'Registered via TSNEIP Dedicated Eco-Form Templates Hub.',
-      imageUrl: photoUrl,
-      threatLevel,
+      template_details: templateDetails,
     };
 
-    onRecordSubmitted(newRecord);
+    try {
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(localStorage.getItem('TSNEIP_AUTH_TOKEN') 
+            ? { 'Authorization': `Bearer ${localStorage.getItem('TSNEIP_AUTH_TOKEN')}` } 
+            : {}),
+        },
+        body: JSON.stringify(payload),
+      });
 
-    setSubmitSuccessMsg(
-      lang === 'ar' 
-        ? `تم إرسال وحفظ الاستمارة الميدانية بنجاح برقم: ${newRecordId}! وتم إدراجها في خريطة المنصة.`
-        : `Form submitted and pushed to spatial map successfully with ID: ${newRecordId}!`
-    );
+      let responseData: any = {};
+      try {
+        responseData = await response.json();
+      } catch (e) {
+        // Fallback if server returned plain status or HTML
+      }
 
-    setTimeout(() => {
-      setSubmitSuccessMsg(null);
-    }, 6000);
+      if (!response.ok) {
+        throw new Error(
+          responseData?.detail || 
+          responseData?.message || 
+          (lang === 'ar' ? 'فشل الاتصال بخادم منصة البيانات. تم التخزين المكتبي.' : 'Backend connection error.')
+        );
+      }
+
+      // Format return object for state update
+      const newRecordId = responseData.id || `SY-FORM-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+      const newRecord: GeoPointRecord = {
+        id: String(newRecordId),
+        siteNameAr: payload.site_name_ar,
+        siteNameEn: payload.site_name_en,
+        governorate,
+        lat,
+        lng,
+        elevation,
+        layerId,
+        sdgTags: [
+          { id: 'sdg-15', code: 'SDG15', labelAr: 'الحياة في البر', labelEn: 'Life on Land', color: '#57B039' },
+          { id: 'sdg-13', code: 'SDG13', labelAr: 'العمل المناخي', labelEn: 'Climate Action', color: '#326B32' },
+        ],
+        verificationStatus: responseData.verification_status || 'verified',
+        collectedDate: new Date().toISOString().split('T')[0],
+        collectorName: inspectorName,
+        collectorTeam: inspectorTeam,
+        metrics,
+        notesAr: payload.notes_ar,
+        notesEn: payload.notes_en,
+        imageUrl: photoUrl,
+        threatLevel,
+      };
+
+      onRecordSubmitted(newRecord);
+
+      setSubmitSuccessMsg(
+        lang === 'ar' 
+          ? `تم إرسال وحفظ الاستمارة الميدانية بنجاح برقم: ${newRecordId}! وتم ربطها بالخريطة التفاعلية.`
+          : `Form submitted and pushed to backend database successfully with ID: ${newRecordId}!`
+      );
+
+      setTimeout(() => setSubmitSuccessMsg(null), 7000);
+    } catch (err: any) {
+      // Offline / Local fallback workflow so field work is never lost
+      const fallbackRecordId = `SY-LOCAL-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+      const fallbackRecord: GeoPointRecord = {
+        id: fallbackRecordId,
+        siteNameAr: payload.site_name_ar,
+        siteNameEn: payload.site_name_en,
+        governorate,
+        lat,
+        lng,
+        elevation,
+        layerId,
+        sdgTags: [
+          { id: 'sdg-15', code: 'SDG15', labelAr: 'الحياة في البر', labelEn: 'Life on Land', color: '#57B039' },
+        ],
+        verificationStatus: 'pending',
+        collectedDate: new Date().toISOString().split('T')[0],
+        collectorName: inspectorName,
+        collectorTeam: inspectorTeam,
+        metrics,
+        notesAr: payload.notes_ar,
+        notesEn: payload.notes_en,
+        imageUrl: photoUrl,
+        threatLevel,
+      };
+
+      onRecordSubmitted(fallbackRecord);
+      setSubmitError(
+        lang === 'ar'
+          ? `تعذر الاتصال بالخادم المباشر (${err.message}). تم إضافة السجل محلياً بنجاح.`
+          : `Server unreachable (${err.message}). Saved locally as draft record.`
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Draft Save Handler
@@ -195,16 +309,15 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
       elevation,
       inspectorName,
       inspectorTeam,
+      threatLevel,
       notesAr,
+      notesEn,
+      photoUrl,
+      templateDetails: buildTemplateDetails(),
       savedAt: new Date().toLocaleString(),
     };
     localStorage.setItem('TSNEIP_FORM_DRAFT', JSON.stringify(draftData));
-    alert(lang === 'ar' ? 'تم حفظ مسودة الاستمارة بنجاح على جهازك!' : 'Form draft saved locally!');
-  };
-
-  // Export Form PDF / Print
-  const handlePrintCertificate = () => {
-    window.print();
+    alert(lang === 'ar' ? 'تم حفظ مسودة الاستمارة بنجاح في التخزين المحلي!' : 'Form draft saved locally!');
   };
 
   return (
@@ -234,6 +347,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
 
           <div className="flex items-center gap-2 shrink-0 relative z-10 w-full md:w-auto justify-end">
             <button
+              type="button"
               onClick={handleSaveDraft}
               className="px-3.5 py-2 text-xs bg-white/15 hover:bg-white/25 text-white rounded-lg border border-white/25 font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
@@ -242,6 +356,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
             </button>
 
             <button
+              type="button"
               onClick={() => setIsPreviewMode(!isPreviewMode)}
               className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5 shadow-xs cursor-pointer ${
                 isPreviewMode 
@@ -255,7 +370,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
           </div>
         </div>
 
-        {/* Success Alert Banner */}
+        {/* Status Alerts */}
         {submitSuccessMsg && (
           <div className="bg-emerald-50 border-2 border-emerald-500 text-emerald-900 p-4 rounded-xl shadow-md flex items-center gap-3 animate-fade-in">
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
@@ -263,10 +378,18 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
           </div>
         )}
 
+        {submitError && (
+          <div className="bg-amber-50 border-2 border-amber-500 text-amber-900 p-4 rounded-xl shadow-md flex items-center gap-3 animate-fade-in">
+            <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
+            <div className="text-xs md:text-sm font-bold">{submitError}</div>
+          </div>
+        )}
+
         {/* Template Selector Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {/* Template 1 */}
+          {/* Template 1: Biodiversity */}
           <button
+            type="button"
             onClick={() => setActiveTemplate('biodiversity')}
             className={`p-3.5 rounded-xl border text-right rtl:text-right ltr:text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
               activeTemplate === 'biodiversity'
@@ -292,8 +415,9 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
             </div>
           </button>
 
-          {/* Template 2 */}
+          {/* Template 2: Water Quality */}
           <button
+            type="button"
             onClick={() => setActiveTemplate('water_quality')}
             className={`p-3.5 rounded-xl border text-right rtl:text-right ltr:text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
               activeTemplate === 'water_quality'
@@ -319,8 +443,9 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
             </div>
           </button>
 
-          {/* Template 3 */}
+          {/* Template 3: Soil & Forest */}
           <button
+            type="button"
             onClick={() => setActiveTemplate('soil_forest')}
             className={`p-3.5 rounded-xl border text-right rtl:text-right ltr:text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
               activeTemplate === 'soil_forest'
@@ -346,8 +471,9 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
             </div>
           </button>
 
-          {/* Template 4 */}
+          {/* Template 4: Demographic Eco Impact */}
           <button
+            type="button"
             onClick={() => setActiveTemplate('demographic_impact')}
             className={`p-3.5 rounded-xl border text-right rtl:text-right ltr:text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
               activeTemplate === 'demographic_impact'
@@ -373,8 +499,9 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
             </div>
           </button>
 
-          {/* Template 5 */}
+          {/* Template 5: Protected Area Patrol */}
           <button
+            type="button"
             onClick={() => setActiveTemplate('protected_area')}
             className={`p-3.5 rounded-xl border text-right rtl:text-right ltr:text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
               activeTemplate === 'protected_area'
@@ -401,7 +528,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
           </button>
         </div>
 
-        {/* Form Body or Preview Document */}
+        {/* View Mode Switcher: Form Editor vs Certificate Preview */}
         {!isPreviewMode ? (
           /* FORM EDITOR WORKSPACE */
           <form onSubmit={handleSubmitForm} className="bg-white rounded-2xl p-6 shadow-md border border-[#D1DCE5] space-y-6">
@@ -431,13 +558,17 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
               </div>
 
               <div className="text-xs text-slate-400 font-mono">
-                {lang === 'ar' ? 'كود النموذج:' : 'Template Code:'} TSNEIP-F-0{activeTemplate === 'biodiversity' ? '1' : activeTemplate === 'water_quality' ? '2' : activeTemplate === 'soil_forest' ? '3' : activeTemplate === 'demographic_impact' ? '4' : '5'}
+                {lang === 'ar' ? 'كود النموذج:' : 'Template Code:'} TSNEIP-F-0{
+                  activeTemplate === 'biodiversity' ? '1' :
+                  activeTemplate === 'water_quality' ? '2' :
+                  activeTemplate === 'soil_forest' ? '3' :
+                  activeTemplate === 'demographic_impact' ? '4' : '5'
+                }
               </div>
             </div>
 
             {/* General Location & Inspector Fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   {lang === 'ar' ? 'اسم الموقع / المحمية (بالعربية) *' : 'Site Name (Arabic) *'}
@@ -479,7 +610,6 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                   ))}
                 </select>
               </div>
-
             </div>
 
             {/* Spatial Coordinates Box */}
@@ -510,7 +640,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                     step="0.0001"
                     value={lat}
                     onChange={(e) => setLat(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
+                    className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
                   />
                 </div>
 
@@ -523,7 +653,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                     step="0.0001"
                     value={lng}
                     onChange={(e) => setLng(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
+                    className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
                   />
                 </div>
 
@@ -535,13 +665,14 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                     type="number"
                     value={elevation}
                     onChange={(e) => setElevation(parseInt(e.target.value, 10) || 0)}
-                    className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
+                    className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Dynamic Specific Template Inputs */}
+            {/* Dynamic Template Inputs */}
+            {/* Template 1: Biodiversity */}
             {activeTemplate === 'biodiversity' && (
               <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-4">
                 <h4 className="font-extrabold text-xs text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -586,7 +717,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                       type="number"
                       value={populationCount}
                       onChange={(e) => setPopulationCount(parseInt(e.target.value, 10) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
 
@@ -600,13 +731,14 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                       min="0"
                       value={biodiversityIndex}
                       onChange={(e) => setBiodiversityIndex(parseInt(e.target.value, 10) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Template 2: Water Quality */}
             {activeTemplate === 'water_quality' && (
               <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-200 space-y-4">
                 <h4 className="font-extrabold text-xs text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -640,7 +772,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                       step="0.1"
                       value={waterPh}
                       onChange={(e) => setWaterPh(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
 
@@ -652,7 +784,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                       type="number"
                       value={waterSalinityPpm}
                       onChange={(e) => setWaterSalinityPpm(parseInt(e.target.value, 10) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
 
@@ -665,240 +797,388 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                       step="0.1"
                       value={dischargeRate}
                       onChange={(e) => setDischargeRate(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Template 3: Soil & Forest */}
             {activeTemplate === 'soil_forest' && (
               <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-4">
                 <h4 className="font-extrabold text-xs text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
                   <Trees className="w-4 h-4 text-amber-600" />
-                  <span>{lang === 'ar' ? 'مؤشرات التربة والانجراف وإعادة التشجير' : 'Soil Carbon & Afforestation Inputs'}</span>
+                  <span>{lang === 'ar' ? 'بيانات انجراف التربة وتغطية الغابات' : 'Soil Erosion & Forest Degradation Inputs'}</span>
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {lang === 'ar' ? 'نوع الانجراف' : 'Erosion Pattern'}
+                      {lang === 'ar' ? 'نوع الانجراف المرصود' : 'Erosion Type'}
                     </label>
                     <select
                       value={erosionType}
                       onChange={(e) => setErosionType(e.target.value)}
                       className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded bg-white font-semibold"
                     >
-                      <option value="water_runoff">{lang === 'ar' ? 'انجراف مائي مطري' : 'Water Runoff'}</option>
-                      <option value="wind">{lang === 'ar' ? 'انجراف ريحي صحراوي' : 'Wind Erosion'}</option>
-                      <option value="tillage">{lang === 'ar' ? 'تعرية زراعية' : 'Soil Tillage Loss'}</option>
+                      <option value="water_runoff">{lang === 'ar' ? 'انجراف مائي' : 'Water Runoff'}</option>
+                      <option value="wind_erosion">{lang === 'ar' ? 'انجراف ريحي' : 'Wind Erosion'}</option>
+                      <option value="overgrazing">{lang === 'ar' ? 'رعي جائر' : 'Overgrazing'}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {lang === 'ar' ? 'المادة العضوية بالتربة %' : 'Organic Carbon %'}
+                      {lang === 'ar' ? 'نسبة المادة العضوية (%)' : 'Organic Soil Content (%)'}
                     </label>
                     <input
                       type="number"
                       step="0.1"
                       value={soilOrganicContent}
                       onChange={(e) => setSoilOrganicContent(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {lang === 'ar' ? 'المساحة المحترقة (هكتار)' : 'Burned Area (Ha)'}
+                      {lang === 'ar' ? 'المساحة المتضررة (هكتار)' : 'Burned/Damaged Hectares'}
                     </label>
                     <input
                       type="number"
                       value={burnedHectares}
                       onChange={(e) => setBurnedHectares(parseInt(e.target.value, 10) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {lang === 'ar' ? 'عدد الغراس المغروسة' : 'Replanted Saplings'}
+                      {lang === 'ar' ? 'الغراس المستنبتة (غرسة)' : 'Replanted Saplings'}
                     </label>
                     <input
                       type="number"
                       value={replantedSaplings}
                       onChange={(e) => setReplantedSaplings(parseInt(e.target.value, 10) || 0)}
-                      className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Field Notes & Photo Attachment */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
+            {/* Template 4: Demographic Impact */}
+            {activeTemplate === 'demographic_impact' && (
+              <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-200 space-y-4">
+                <h4 className="font-extrabold text-xs text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Home className="w-4 h-4 text-purple-600" />
+                  <span>{lang === 'ar' ? 'مؤشرات الأثر الديموغرافي والمجتمعات المجاورة' : 'Demographic & Household Energy Patterns'}</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {lang === 'ar' ? 'عدد الأسر المشمولة' : 'Surveyed Households'}
+                    </label>
+                    <input
+                      type="number"
+                      value={householdCount}
+                      onChange={(e) => setHouseholdCount(parseInt(e.target.value, 10) || 0)}
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {lang === 'ar' ? 'مصدر الطاقة الرئيسي' : 'Primary Fuel Source'}
+                    </label>
+                    <select
+                      value={primaryFuel}
+                      onChange={(e) => setPrimaryFuel(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded bg-white font-semibold"
+                    >
+                      <option value="solar_hybrid">{lang === 'ar' ? 'طاقة شمسية هجينة' : 'Solar Hybrid'}</option>
+                      <option value="biomass_wood">{lang === 'ar' ? 'حطب وأخشاب' : 'Biomass / Wood'}</option>
+                      <option value="diesel">{lang === 'ar' ? 'ديزل / مازوت' : 'Diesel Fuel'}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {lang === 'ar' ? 'الاعتماد على الآبار الخاصة (%)' : 'Well Reliance (%)'}
+                    </label>
+                    <input
+                      type="number"
+                      max="100"
+                      min="0"
+                      value={wellReliancePercent}
+                      onChange={(e) => setWellReliancePercent(parseInt(e.target.value, 10) || 0)}
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Template 5: Protected Reserve Patrol */}
+            {activeTemplate === 'protected_area' && (
+              <div className="bg-red-50/50 p-4 rounded-xl border border-red-200 space-y-4">
+                <h4 className="font-extrabold text-xs text-red-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldAlert className="w-4 h-4 text-red-600" />
+                  <span>{lang === 'ar' ? 'توثيق دورية حراسة وتدقيق الانتهاكات' : 'Protected Reserve Security & Incident Log'}</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {lang === 'ar' ? 'اسم المحمية الطبيعية' : 'Reserve Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={reserveName}
+                      onChange={(e) => setReserveName(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded bg-white font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {lang === 'ar' ? 'نوع الحادثة / التهديد' : 'Incident Type'}
+                    </label>
+                    <select
+                      value={incidentType}
+                      onChange={(e) => setIncidentType(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded bg-white font-semibold text-red-700"
+                    >
+                      <option value="logging_prevention">{lang === 'ar' ? 'منع تحطيب غير قانوني' : 'Illegal Logging Prevention'}</option>
+                      <option value="fire_hazard">{lang === 'ar' ? 'إنذار حريق مبكر' : 'Early Fire Hazard'}</option>
+                      <option value="poaching">{lang === 'ar' ? 'صيد جائر' : 'Poaching Enforcement'}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {lang === 'ar' ? 'معرف فرقة الدورية' : 'Patrol Squad ID'}
+                    </label>
+                    <input
+                      type="text"
+                      value={patrolSquadId}
+                      onChange={(e) => setPatrolSquadId(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded bg-white font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Inspector Metadata & Assessment */}
+            <div className="border-t border-slate-200 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{lang === 'ar' ? 'اسم المفتش / جامع البيانات' : 'Collector Name'}</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={inspectorName}
+                  onChange={(e) => setInspectorName(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006BB2]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{lang === 'ar' ? 'الفريق الميداني' : 'Collector Team'}</span>
+                </label>
+                <input
+                  type="text"
+                  value={inspectorTeam}
+                  onChange={(e) => setInspectorTeam(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006BB2]"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {lang === 'ar' ? 'الملاحظات والتوصيات الميدانية *' : 'Field Inspection Notes & Recommendations *'}
+                  {lang === 'ar' ? 'مستوى التهديد البيئي' : 'Threat Level'}
+                </label>
+                <select
+                  value={threatLevel}
+                  onChange={(e) => setThreatLevel(e.target.value as any)}
+                  className={`w-full px-3 py-2 text-xs border rounded-lg font-bold bg-white ${
+                    threatLevel === 'low' ? 'border-emerald-500 text-emerald-700' :
+                    threatLevel === 'moderate' ? 'border-amber-500 text-amber-700' :
+                    threatLevel === 'high' ? 'border-orange-500 text-orange-700' :
+                    'border-red-600 text-red-700'
+                  }`}
+                >
+                  <option value="low">{lang === 'ar' ? 'منخفض (Low)' : 'Low Threat'}</option>
+                  <option value="moderate">{lang === 'ar' ? 'متوسط (Moderate)' : 'Moderate Threat'}</option>
+                  <option value="high">{lang === 'ar' ? 'مرتفع (High)' : 'High Threat'}</option>
+                  <option value="critical">{lang === 'ar' ? 'حرج جداً (Critical)' : 'Critical Threat'}</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Photo URL & Notes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <Camera className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{lang === 'ar' ? 'رابط الصورة الميدانية (URL)' : 'Field Evidence Photo URL'}</span>
+                </label>
+                <input
+                  type="url"
+                  value={photoUrl}
+                  onChange={(e) => setPhotoUrl(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006BB2] font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {lang === 'ar' ? 'الملاحظات الميدانية والتوصيات' : 'Field Notes & Observations'}
                 </label>
                 <textarea
-                  rows={3}
-                  value={notesAr}
-                  onChange={(e) => setNotesAr(e.target.value)}
-                  placeholder={lang === 'ar' ? 'اكتب ملاحظات الفريق الميداني وتوصيات الصيانة بيئياً...' : 'Field team observations, biodiversity health notes & intervention plans...'}
-                  className="w-full p-3 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006BB2] focus:outline-none"
-                ></textarea>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {lang === 'ar' ? 'صورة التوثيق الميداني (رابط/معاينة)' : 'Field Documentation Photo (URL)'}
-                </label>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={photoUrl}
-                    onChange={(e) => setPhotoUrl(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
-                  />
-                  {photoUrl && (
-                    <div className="h-20 rounded-lg overflow-hidden border border-slate-200 relative group">
-                      <img src={photoUrl} alt="Field preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-bold">
-                        {lang === 'ar' ? 'معاينة الصورة' : 'Photo Preview'}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  rows={2}
+                  value={lang === 'ar' ? notesAr : notesEn}
+                  onChange={(e) => lang === 'ar' ? setNotesAr(e.target.value) : setNotesEn(e.target.value)}
+                  placeholder={lang === 'ar' ? 'أدخل ملاحظات المسح والمقترحات الميدانية...' : 'Enter field notes...'}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006BB2]"
+                />
               </div>
             </div>
 
-            {/* Submit Bar */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                <span className="text-xs text-slate-500 font-medium">
-                  {lang === 'ar' ? 'سيتم اعتماد الاستمارة فورياً في نظام TSNEIP' : 'Form will be immediately registered into TSNEIP spatial layer'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-[#009600] hover:bg-[#008000] text-white text-xs md:text-sm font-extrabold rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer border border-emerald-400/30"
-                >
-                  <FileCheck className="w-4 h-4" />
-                  <span>{lang === 'ar' ? 'حفظ واعتماد الاستمارة بالمنظومة' : 'Submit & Register Eco Form'}</span>
-                </button>
-              </div>
+            {/* Submit Actions */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 bg-[#006BB2] hover:bg-[#005590] disabled:bg-slate-400 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{lang === 'ar' ? 'جاري إرسال الاستمارة...' : 'Submitting to Backend...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>{lang === 'ar' ? 'اعتماد وإرسال الاستمارة' : 'Submit Eco-Form Record'}</span>
+                  </>
+                )}
+              </button>
             </div>
-
           </form>
         ) : (
-          /* PREVIEW CERTIFICATE DOCUMENT WORKSPACE */
-          <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-[#006BB2]/40 space-y-6 print:p-0 print:border-none">
+          /* CERTIFICATE / DOCUMENT PREVIEW MODE */
+          <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-slate-300 space-y-6 print:p-0 print:border-none">
             
-            {/* Certificate Header Banner */}
-            <div className="flex items-center justify-between pb-6 border-b-2 border-slate-800">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#009600] to-[#006BB2] text-white flex items-center justify-center shadow-md font-bold text-2xl">
-                  SY
-                </div>
-                <div>
-                  <div className="text-xs font-mono font-bold text-emerald-700 uppercase tracking-widest">
-                    REPUBLIC OF SYRIA &mdash; ALTATWEER FOUNDATION
-                  </div>
-                  <h1 className="text-2xl font-black text-slate-900 font-heading">
-                    {lang === 'ar' ? 'وثيقة سجل المسح البيئي والمكاني المعتمَد' : 'Certified Syrian Environmental Field Survey Record'}
-                  </h1>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    TSNEIP GIS Platform &bull; Serial No: SY-CERT-2026-8941
-                  </p>
-                </div>
+            {/* Certificate Print Header */}
+            <div className="flex items-start justify-between border-b-2 border-slate-900 pb-6">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono tracking-widest text-slate-500 uppercase">
+                  AlTatweer Foundation for Environmental Studies
+                </span>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                  {lang === 'ar' ? 'شهادة توثيق مسح ميداني بيئي' : 'Official Environmental Field Survey Record'}
+                </h1>
+                <p className="text-xs text-slate-600 font-mono">
+                  TSNEIP Unified Platform • Document ID: SY-CERT-{Math.floor(100000 + Math.random() * 900000)}
+                </p>
               </div>
 
-              <div className="hidden sm:flex flex-col items-end text-right">
-                <div className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-extrabold rounded-full uppercase border border-emerald-300">
-                  OFFICIALLY VERIFIED
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-1">
-                  Issued: {new Date().toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Document Attributes Table */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
-              <div>
-                <span className="text-slate-500 font-medium">{lang === 'ar' ? 'اسم الموقع:' : 'Site Name:'}</span>
-                <div className="font-bold text-slate-900 mt-0.5">{siteNameAr || 'محمية شوح الفرنلق'}</div>
-              </div>
-              <div>
-                <span className="text-slate-500 font-medium">{lang === 'ar' ? 'المحافظة:' : 'Governorate:'}</span>
-                <div className="font-bold text-slate-900 mt-0.5">{governorate}</div>
-              </div>
-              <div>
-                <span className="text-slate-500 font-medium">{lang === 'ar' ? 'الإحداثيات:' : 'Coordinates:'}</span>
-                <div className="font-mono font-bold text-[#006BB2] mt-0.5">{lat}° N, {lng}° E</div>
-              </div>
-              <div>
-                <span className="text-slate-500 font-medium">{lang === 'ar' ? 'الفريق المفتش:' : 'Inspection Team:'}</span>
-                <div className="font-bold text-slate-900 mt-0.5">{inspectorName}</div>
-              </div>
-            </div>
-
-            {/* Inspection Details Section */}
-            <div className="space-y-3">
-              <h4 className="font-extrabold text-sm text-slate-900 border-b border-slate-200 pb-1">
-                {lang === 'ar' ? '1. ملخص القراءات والمؤشرات البيئية' : '1. Environmental Indicators & Metrics Breakdown'}
-              </h4>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                  <span className="text-[10px] text-emerald-800 font-bold uppercase">Biodiversity Index</span>
-                  <div className="text-lg font-black text-emerald-900 font-coord">{biodiversityIndex} / 100</div>
-                </div>
-
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                  <span className="text-[10px] text-blue-800 font-bold uppercase">Water Quality pH</span>
-                  <div className="text-lg font-black text-blue-900 font-coord">{waterPh} pH</div>
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                  <span className="text-[10px] text-amber-800 font-bold uppercase">Soil Organic Carbon</span>
-                  <div className="text-lg font-black text-amber-900 font-coord">{soilOrganicContent}%</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Notes Section */}
-            <div className="space-y-2">
-              <h4 className="font-extrabold text-sm text-slate-900 border-b border-slate-200 pb-1">
-                {lang === 'ar' ? '2. التوصيات الميدانية المعتمدة' : '2. Official Field Recommendations'}
-              </h4>
-              <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
-                {notesAr || (lang === 'ar' ? 'توصي الاستمارة بتفعيل أجهزة الترقيم والاستشعار عن بعد ومتابعة حالة تجدد الغطاء النباتي.' : 'Recommends active remote sensing tracking and vegetation regeneration monitoring.')}
-              </p>
-            </div>
-
-            {/* Footer Signatures Bar */}
-            <div className="pt-6 border-t border-slate-300 flex items-center justify-between text-xs">
-              <div>
-                <div className="font-bold text-slate-900">مؤسسة التطوير البيئي &bull; AlTatweer</div>
-                <div className="text-[10px] text-slate-500">منصة البيانات الجغرافية الوطنية (TSNEIP)</div>
-              </div>
-
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col items-end gap-2 print:hidden">
                 <button
-                  onClick={handlePrintCertificate}
-                  className="px-4 py-2 bg-[#006BB2] text-white font-bold rounded-lg shadow-sm hover:bg-[#005794] transition-all flex items-center gap-1.5 cursor-pointer"
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>{lang === 'ar' ? 'طباعة الوثيقة (PDF)' : 'Print Document (PDF)'}</span>
+                  <span>{lang === 'ar' ? 'طباعة / تصدير PDF' : 'Print / Export PDF'}</span>
                 </button>
               </div>
             </div>
 
+            {/* Document Body Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+              <div>
+                <span className="text-slate-500 block text-[10px] font-bold">{lang === 'ar' ? 'الموقع' : 'Site'}</span>
+                <span className="font-extrabold text-slate-900">{siteNameAr || 'موقع غير مسمى'}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10px] font-bold">{lang === 'ar' ? 'المحافظة' : 'Governorate'}</span>
+                <span className="font-bold text-slate-900">{governorate}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10px] font-bold">{lang === 'ar' ? 'الإحداثيات' : 'Coordinates'}</span>
+                <span className="font-mono text-slate-800">{lat.toFixed(4)}°N, {lng.toFixed(4)}°E</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10px] font-bold">{lang === 'ar' ? 'جامع البيانات' : 'Collector'}</span>
+                <span className="font-bold text-slate-900">{inspectorName}</span>
+              </div>
+            </div>
+
+            {/* Template Metrics Table */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wider border-b pb-1 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#006BB2]" />
+                <span>{lang === 'ar' ? 'النتائج والمؤشرات الفنية المرصودة' : 'Recorded Survey Technical Metrics'}</span>
+              </h4>
+
+              <table className="w-full text-xs text-right rtl:text-right ltr:text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-300 font-extrabold text-slate-700">
+                    <th className="p-2.5">{lang === 'ar' ? 'المؤشر / المعيار' : 'Metric'}</th>
+                    <th className="p-2.5">{lang === 'ar' ? 'القيمة المسجلة' : 'Recorded Value'}</th>
+                    <th className="p-2.5">{lang === 'ar' ? 'مستوى التقييم' : 'Evaluation'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {activeTemplate === 'biodiversity' && (
+                    <>
+                      <tr>
+                        <td className="p-2.5 font-bold">{lang === 'ar' ? 'النوع المرصود' : 'Target Species'}</td>
+                        <td className="p-2.5">{speciesNameAr}</td>
+                        <td className="p-2.5 font-mono text-emerald-700 font-bold">{speciesCategory.toUpperCase()}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold">{lang === 'ar' ? 'مؤشر صحة التنوع' : 'Biodiversity Health Index'}</td>
+                        <td className="p-2.5 font-mono font-bold">{biodiversityIndex} / 100</td>
+                        <td className="p-2.5 text-emerald-600 font-bold">{biodiversityIndex > 70 ? 'ممتاز' : 'متوسط'}</td>
+                      </tr>
+                    </>
+                  )}
+                  {activeTemplate === 'water_quality' && (
+                    <>
+                      <tr>
+                        <td className="p-2.5 font-bold">{lang === 'ar' ? 'حموضة المياه (pH)' : 'Water pH'}</td>
+                        <td className="p-2.5 font-mono font-bold">{waterPh}</td>
+                        <td className="p-2.5 text-blue-700 font-bold">{waterPh >= 6.5 && waterPh <= 8.5 ? 'ضمن المعايير' : 'خارج الحدود'}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold">{lang === 'ar' ? 'الملوحة (TDS PPM)' : 'Salinity PPM'}</td>
+                        <td className="p-2.5 font-mono font-bold">{waterSalinityPpm} PPM</td>
+                        <td className="p-2.5 text-slate-700">{waterSalinityPpm < 500 ? 'عذبة' : 'شديدة الملوحة'}</td>
+                      </tr>
+                    </>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Verification Stamp */}
+            <div className="pt-6 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-emerald-600" />
+                <span>{lang === 'ar' ? 'موثق رسمياً برقم تسلسلي غير قابل للتعديل' : 'Digitally Signed & Verified'}</span>
+              </div>
+              <div className="font-mono text-[10px]">TSNEIP GIS ENGINE v2.4</div>
+            </div>
           </div>
         )}
 

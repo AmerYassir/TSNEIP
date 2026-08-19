@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Language, 
-  GeoPointRecord, 
+  Observation, 
   SpatialLayerConfig, 
   SyrianGovernorate, 
   LayerId,
@@ -13,14 +13,9 @@ import { SDG_TAGS } from '../data/mockData';
 import { 
   X, 
   MapPin, 
-  Save, 
   Crosshair, 
   Plus, 
-  CheckCircle2, 
-  AlertCircle,
-  Upload,
-  Layers,
-  Sparkles
+  CheckCircle2
 } from 'lucide-react';
 
 interface GeoDataSubmissionModalProps {
@@ -28,7 +23,7 @@ interface GeoDataSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   layers: SpatialLayerConfig[];
-  onSubmitRecord: (newRecord: GeoPointRecord) => void;
+  onSubmitRecord: (newRecord: Observation) => void;
   onActivateMapPickMode: () => void;
   pickedLat?: number;
   pickedLng?: number;
@@ -69,7 +64,7 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
   const [lat, setLat] = useState<string>(pickedLat ? pickedLat.toString() : '33.5138');
   const [lng, setLng] = useState<string>(pickedLng ? pickedLng.toString() : '36.2765');
   const [elevation, setElevation] = useState<string>('450');
-  const [layerId, setLayerId] = useState<LayerId>('env_baseline');
+  const [layerId, setLayerId] = useState<string>('env_baseline');
   const [selectedSdgCodes, setSelectedSdgCodes] = useState<string[]>(['SDG15', 'SDG6']);
   const [threatLevel, setThreatLevel] = useState<'low' | 'moderate' | 'high' | 'critical'>('moderate');
   const [collectorName, setCollectorName] = useState<string>('م. طارق الشامي');
@@ -86,7 +81,7 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
   // Sync picked coordinates if changed
-  React.useEffect(() => {
+  useEffect(() => {
     if (pickedLat) setLat(pickedLat.toFixed(5));
     if (pickedLng) setLng(pickedLng.toFixed(5));
   }, [pickedLat, pickedLng]);
@@ -106,30 +101,35 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
       .map(code => SDG_TAGS[code])
       .filter(Boolean);
 
-    const newRecord: GeoPointRecord = {
-      id: `SY-ENV-2026-${Math.floor(100 + Math.random() * 900)}`,
-      siteNameAr: siteNameAr || (lang === 'ar' ? 'موقع مسح ميداني جديد' : 'New Survey Site'),
-      siteNameEn: siteNameEn || 'New Survey Site',
+    const parsedLat = parseFloat(lat) || 33.5138;
+    const parsedLng = parseFloat(lng) || 36.2765;
+
+    const newRecord: Observation = {
+      record_code: `SY-ENV-2026-${Math.floor(100 + Math.random() * 900)}`,
+      site_name_ar: siteNameAr || (lang === 'ar' ? 'موقع مسح ميداني جديد' : 'New Survey Site'),
+      site_name_en: siteNameEn || 'New Survey Site',
       governorate,
-      lat: parseFloat(lat) || 33.5138,
-      lng: parseFloat(lng) || 36.2765,
+      location: {
+        type: 'Point',
+        coordinates: [parsedLng, parsedLat], // PostGIS GeoJSON Format [longitude, latitude]
+      },
       elevation: parseFloat(elevation) || 450,
-      layerId,
-      sdgTags: selectedSdgs.length > 0 ? selectedSdgs : [SDG_TAGS.SDG15],
-      verificationStatus: 'pending',
-      collectedDate: new Date().toISOString().split('T')[0],
-      collectorName: collectorName || 'باحث ميداني',
-      collectorTeam: collectorTeam || 'فريق TSNEIP الوطنية',
+      layer_id: layerId,
+      sdg_tags: selectedSdgs.length > 0 ? selectedSdgs : [SDG_TAGS.SDG15],
+      status: 'pending',
+      collected_date: new Date().toISOString().split('T')[0],
+      collector_name: collectorName || 'باحث ميداني',
+      collector_team: collectorTeam || 'فريق TSNEIP الوطنية',
       metrics: {
         ndvi: ndvi ? parseFloat(ndvi) : undefined,
-        waterPh: waterPh ? parseFloat(waterPh) : undefined,
-        waterSalinityPpm: salinity ? parseFloat(salinity) : undefined,
-        biodiversityIndex: biodiversityIndex ? parseFloat(biodiversityIndex) : undefined,
+        water_ph: waterPh ? parseFloat(waterPh) : undefined,
+        water_salinity_ppm: salinity ? parseFloat(salinity) : undefined,
+        biodiversity_index: biodiversityIndex ? parseFloat(biodiversityIndex) : undefined,
       },
-      notesAr: notesAr || 'تم توثيق البيانات الميدانية عبر البوابة الجغرافية الوطنية.',
-      notesEn: notesEn || 'Field observations committed to TSNEIP national database.',
-      imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80',
-      threatLevel,
+      notes_ar: notesAr || 'تم توثيق البيانات الميدانية عبر البوابة الجغرافية الوطنية.',
+      notes_en: notesEn || 'Field observations committed to TSNEIP national database.',
+      image_url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80',
+      threat_level: threatLevel,
     };
 
     onSubmitRecord(newRecord);
@@ -229,7 +229,7 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
                 </label>
                 <select
                   value={layerId}
-                  onChange={(e) => setLayerId(e.target.value as LayerId)}
+                  onChange={(e) => setLayerId(e.target.value)}
                   className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-[#D1DCE5] rounded-md focus:bg-white focus:ring-2 focus:ring-[#006BB2] focus:outline-none"
                 >
                   {layers.map((l) => (
@@ -246,7 +246,7 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
                   <MapPin className="w-4 h-4 text-[#009600]" />
-                  <span>{t.coordinates} (WGS84)</span>
+                  <span>{t.coordinates} (WGS84 EPSG:4326)</span>
                 </span>
                 <button
                   type="button"
@@ -306,7 +306,7 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
                   const isChecked = selectedSdgCodes.includes(sdg.code);
                   return (
                     <button
-                      key={sdg.id}
+                      key={sdg.id || sdg.code}
                       type="button"
                       onClick={() => toggleSdg(sdg.code)}
                       className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 border transition-all cursor-pointer ${
@@ -321,7 +321,7 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
                     >
                       <span>{sdg.code}</span>
                       <span className="text-[10px] font-normal opacity-90">
-                        ({lang === 'ar' ? sdg.labelAr.split(':')[1] || sdg.labelAr : sdg.code})
+                        ({lang === 'ar' ? (sdg.label_ar || sdg.labelAr || '').split(':')[1] || (sdg.label_ar || sdg.labelAr) : sdg.code})
                       </span>
                     </button>
                   );
@@ -329,7 +329,7 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
               </div>
             </div>
 
-            {/* Environmental Metrics (NDVI, pH, Salinity, Bio) */}
+            {/* Environmental Metrics */}
             <div className="bg-emerald-50/50 p-3 rounded-lg border border-emerald-100 space-y-2">
               <span className="text-xs font-bold text-emerald-900 block mb-1">
                 {t.environmentalMetrics}
@@ -407,10 +407,10 @@ export const GeoDataSubmissionModal: React.FC<GeoDataSubmissionModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs bg-[#009600] hover:bg-[#008000] text-white rounded-md font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer border border-emerald-600"
+                className="px-5 py-2 text-xs bg-[#009600] hover:bg-[#008000] text-white rounded-md font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
               >
-                <Save className="w-4 h-4" />
-                <span>{t.saveGeoRecord}</span>
+                <Plus className="w-4 h-4" />
+                <span>{t.submitRecord}</span>
               </button>
             </div>
 

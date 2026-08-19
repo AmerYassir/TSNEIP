@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Language, 
-  GeoPointRecord, 
+  Observation, 
   VerificationStatus,
   SpatialLayerConfig 
 } from '../types';
@@ -13,23 +13,20 @@ import {
   Download, 
   FileText, 
   FileSpreadsheet, 
-  ExternalLink, 
   CheckCircle2, 
   Clock, 
   AlertTriangle,
   Search,
-  Filter,
-  Eye,
-  MapPin
+  Eye
 } from 'lucide-react';
 
 interface DataDrawerTableProps {
   lang: Language;
-  geoPoints: GeoPointRecord[];
+  geoPoints: Observation[];
   layers: SpatialLayerConfig[];
-  selectedPoint: GeoPointRecord | null;
-  onSelectPoint: (point: GeoPointRecord) => void;
-  onViewRecordDetails: (point: GeoPointRecord) => void;
+  selectedPoint: Observation | null;
+  onSelectPoint: (point: Observation) => void;
+  onViewRecordDetails: (point: Observation) => void;
   onExportCsv: () => void;
   onExportGeoJson: () => void;
   onExportKml: () => void;
@@ -51,36 +48,84 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
   const t = translations[lang];
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [tableSearch, setTableSearch] = useState<string>('');
-  const [sortField, setSortField] = useState<keyof GeoPointRecord>('collectedDate');
+  const [sortField, setSortField] = useState<string>('collected_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+
+  // Coordinate extraction helper for PostGIS GeoJSON [lng, lat] vs legacy properties
+  const getCoordinates = (p: Observation) => {
+    const lat = p.location?.coordinates ? p.location.coordinates[1] : (p as unknown as { lat: number }).lat ?? 0;
+    const lng = p.location?.coordinates ? p.location.coordinates[0] : (p as unknown as { lng: number }).lng ?? 0;
+    return { lat, lng };
+  };
+
+  // Helper getters to safely access attributes across snake_case and camelCase
+  const getSiteName = (p: Observation) => {
+    const ar = p.site_name_ar || (p as unknown as { siteNameAr: string }).siteNameAr || '';
+    const en = p.site_name_en || (p as unknown as { siteNameEn: string }).siteNameEn || '';
+    return lang === 'ar' ? ar : en || ar;
+  };
+
+  const getCollectorName = (p: Observation) => {
+    return p.collector_name || (p as unknown as { collectorName: string }).collectorName || '';
+  };
+
+  const getLayerId = (p: Observation) => {
+    return String(p.layer_id || (p as unknown as { layerId: string }).layerId || '');
+  };
+
+  const getRecordId = (p: Observation) => {
+    return String(p.record_code || p.id || '');
+  };
+
+  const getStatus = (p: Observation): VerificationStatus => {
+    return (p.status || (p as unknown as { verificationStatus: VerificationStatus }).verificationStatus || 'pending') as VerificationStatus;
+  };
 
   // Filtered records inside table
   const filteredPoints = geoPoints.filter((p) => {
     if (!tableSearch) return true;
     const q = tableSearch.toLowerCase();
+    const siteAr = (p.site_name_ar || (p as unknown as { siteNameAr: string }).siteNameAr || '').toLowerCase();
+    const siteEn = (p.site_name_en || (p as unknown as { siteNameEn: string }).siteNameEn || '').toLowerCase();
+    const gov = (p.governorate || '').toLowerCase();
+    const collector = getCollectorName(p).toLowerCase();
+    const recId = getRecordId(p).toLowerCase();
+
     return (
-      p.id.toLowerCase().includes(q) ||
-      p.siteNameAr.toLowerCase().includes(q) ||
-      p.siteNameEn.toLowerCase().includes(q) ||
-      p.governorate.toLowerCase().includes(q) ||
-      p.collectorName.toLowerCase().includes(q)
+      recId.includes(q) ||
+      siteAr.includes(q) ||
+      siteEn.includes(q) ||
+      gov.includes(q) ||
+      collector.includes(q)
     );
   });
 
-  // Sorting
+  // Sorting logic
   const sortedPoints = [...filteredPoints].sort((a, b) => {
-    const valA = a[sortField];
-    const valB = b[sortField];
-    if (typeof valA === 'string' && typeof valB === 'string') {
-      return sortDirection === 'asc' 
-        ? valA.localeCompare(valB) 
-        : valB.localeCompare(valA);
+    let valA: string = '';
+    let valB: string = '';
+
+    if (sortField === 'id' || sortField === 'record_code') {
+      valA = getRecordId(a);
+      valB = getRecordId(b);
+    } else if (sortField === 'site_name_ar' || sortField === 'siteNameAr') {
+      valA = getSiteName(a);
+      valB = getSiteName(b);
+    } else if (sortField === 'governorate') {
+      valA = a.governorate || '';
+      valB = b.governorate || '';
+    } else if (sortField === 'collected_date' || sortField === 'collectedDate') {
+      valA = a.collected_date || (a as unknown as { collectedDate: string }).collectedDate || '';
+      valB = b.collected_date || (b as unknown as { collectedDate: string }).collectedDate || '';
     }
-    return 0;
+
+    return sortDirection === 'asc' 
+      ? valA.localeCompare(valB) 
+      : valB.localeCompare(valA);
   });
 
-  const handleSort = (field: keyof GeoPointRecord) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -99,18 +144,19 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
     if (selectedRowIds.length === sortedPoints.length) {
       setSelectedRowIds([]);
     } else {
-      setSelectedRowIds(sortedPoints.map(p => p.id));
+      setSelectedRowIds(sortedPoints.map(p => String(p.id)));
     }
   };
 
   const getLayerTitle = (layerId: string) => {
-    const l = layers.find(item => item.id === layerId);
+    const l = layers.find(item => String(item.id) === String(layerId));
     if (!l) return layerId;
     return lang === 'ar' ? l.titleAr : l.titleEn;
   };
 
   const renderStatusBadge = (status: VerificationStatus) => {
     switch (status) {
+      case 'approved':
       case 'verified':
         return (
           <span className="bg-emerald-100 text-[#009600] border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1">
@@ -126,6 +172,7 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
           </span>
         );
       case 'needs_audit':
+      case 'rejected':
         return (
           <span className="bg-rose-100 text-rose-800 border border-rose-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" />
@@ -161,7 +208,6 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
         {/* Search & Export Action Buttons */}
         <div className="flex items-center gap-2">
           
-          {/* Search Input inside drawer */}
           <div className="relative hidden md:block">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 rtl:left-auto rtl:right-2.5 top-1.5" />
             <input
@@ -173,7 +219,6 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
             />
           </div>
 
-          {/* Export CSV */}
           <button
             onClick={onExportCsv}
             className="px-2.5 py-1 text-[11px] bg-white/15 hover:bg-white/25 text-white rounded font-medium flex items-center gap-1 transition-all cursor-pointer border border-white/20"
@@ -183,7 +228,6 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
             <span className="hidden sm:inline">{t.exportDataCsv}</span>
           </button>
 
-          {/* Export GeoJSON */}
           <button
             onClick={onExportGeoJson}
             className="px-2.5 py-1 text-[11px] bg-white/15 hover:bg-white/25 text-white rounded font-medium flex items-center gap-1 transition-all cursor-pointer border border-white/20"
@@ -193,7 +237,6 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
             <span className="hidden sm:inline">GeoJSON</span>
           </button>
 
-          {/* Print PDF Report */}
           <button
             onClick={onExportPdfReport}
             className="px-2.5 py-1 text-[11px] bg-[#009600] hover:bg-[#008000] text-white rounded font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer border border-emerald-500"
@@ -221,16 +264,16 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
                   />
                 </th>
                 <th 
-                  onClick={() => handleSort('id')}
+                  onClick={() => handleSort('record_code')}
                   className="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors"
                 >
                   <div className="flex items-center gap-1 font-mono">
                     <span>{t.colId}</span>
-                    {sortField === 'id' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    {sortField === 'record_code' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </div>
                 </th>
                 <th 
-                  onClick={() => handleSort('siteNameAr')}
+                  onClick={() => handleSort('site_name_ar')}
                   className="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors"
                 >
                   <span>{t.colSiteName}</span>
@@ -269,12 +312,18 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
                 </tr>
               ) : (
                 sortedPoints.map((point) => {
+                  const pointId = String(point.id);
                   const isSelected = selectedPoint?.id === point.id;
-                  const isChecked = selectedRowIds.includes(point.id);
+                  const isChecked = selectedRowIds.includes(pointId);
+                  const { lat, lng } = getCoordinates(point);
+                  const sdgList = point.sdg_tags || (point as unknown as { sdgTags: typeof point.sdg_tags }).sdgTags || [];
+                  const metrics = point.metrics || {};
+                  const waterPh = metrics.water_ph ?? (metrics as unknown as { waterPh: number }).waterPh;
+                  const bioIndex = metrics.biodiversity_index ?? (metrics as unknown as { biodiversityIndex: number }).biodiversityIndex;
 
                   return (
                     <tr
-                      key={point.id}
+                      key={pointId}
                       onClick={() => onSelectPoint(point)}
                       className={`hover:bg-blue-50/60 transition-colors cursor-pointer ${
                         isSelected ? 'bg-emerald-50/80 font-medium' : ''
@@ -284,49 +333,43 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={() => toggleSelectRow(point.id)}
+                          onChange={() => toggleSelectRow(pointId)}
                           className="w-3.5 h-3.5 text-[#009600] rounded focus:ring-[#009600]"
                         />
                       </td>
 
-                      {/* Point ID */}
                       <td className="p-2.5 font-mono font-bold text-[#006BB2]">
-                        {point.id}
+                        {getRecordId(point)}
                       </td>
 
-                      {/* Site Name */}
                       <td className="p-2.5 font-semibold text-slate-900">
-                        {lang === 'ar' ? point.siteNameAr : point.siteNameEn}
+                        {getSiteName(point)}
                       </td>
 
-                      {/* Governorate */}
                       <td className="p-2.5 font-medium text-slate-700">
                         <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-200">
                           {point.governorate}
                         </span>
                       </td>
 
-                      {/* Coordinates */}
                       <td className="p-2.5 font-coord text-[11px] text-slate-600">
-                        {point.lat.toFixed(4)}° N, {point.lng.toFixed(4)}° E
+                        {lat.toFixed(4)}° N, {lng.toFixed(4)}° E
                       </td>
 
-                      {/* Layer Category */}
                       <td className="p-2.5">
                         <span className="text-[11px] text-slate-700 font-medium">
-                          {getLayerTitle(point.layerId)}
+                          {getLayerTitle(getLayerId(point))}
                         </span>
                       </td>
 
-                      {/* SDG Tags */}
                       <td className="p-2.5">
                         <div className="flex flex-wrap gap-1">
-                          {point.sdgTags.map((sdg) => (
+                          {sdgList.map((sdg) => (
                             <span
-                              key={sdg.id}
+                              key={sdg.id || sdg.code}
                               className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded shadow-2xs"
                               style={{ backgroundColor: sdg.color }}
-                              title={lang === 'ar' ? sdg.labelAr : sdg.labelEn}
+                              title={lang === 'ar' ? sdg.label_ar || sdg.labelAr : sdg.label_en || sdg.labelEn}
                             >
                               {sdg.code}
                             </span>
@@ -334,31 +377,28 @@ export const DataDrawerTable: React.FC<DataDrawerTableProps> = ({
                         </div>
                       </td>
 
-                      {/* Status */}
                       <td className="p-2.5">
-                        {renderStatusBadge(point.verificationStatus)}
+                        {renderStatusBadge(getStatus(point))}
                       </td>
 
-                      {/* Metrics Snapshot */}
                       <td className="p-2.5 font-coord text-[11px]">
-                        {point.metrics.ndvi && (
+                        {metrics.ndvi !== undefined && (
                           <span className="text-emerald-700 font-semibold mr-2 rtl:mr-0 rtl:ml-2">
-                            NDVI: {point.metrics.ndvi}
+                            NDVI: {metrics.ndvi}
                           </span>
                         )}
-                        {point.metrics.waterPh && (
-                          <span className="text-blue-700 font-semibold">
-                            pH: {point.metrics.waterPh}
+                        {waterPh !== undefined && (
+                          <span className="text-blue-700 font-semibold mr-2 rtl:mr-0 rtl:ml-2">
+                            pH: {waterPh}
                           </span>
                         )}
-                        {point.metrics.biodiversityIndex && (
+                        {bioIndex !== undefined && (
                           <span className="text-purple-700 font-semibold">
-                            Bio: {point.metrics.biodiversityIndex}
+                            Bio: {bioIndex}
                           </span>
                         )}
                       </td>
 
-                      {/* Actions */}
                       <td className="p-2.5 text-center" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => onViewRecordDetails(point)}
