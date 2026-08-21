@@ -43,7 +43,7 @@ class MetricReadingSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class GeoObservationSerializer(RoleFieldPermissionsMixin, serializers.ModelSerializer):
+class GeoObservationSerializer(serializers.ModelSerializer):
     """
     Atomic creation serializer handling Point conversion and nested bulk readings.
     """

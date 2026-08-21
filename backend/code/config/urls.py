@@ -17,16 +17,30 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from django.conf.urls.i18n import i18n_patterns
+from django.conf import settings
+from django.conf.urls.static import static
+
+api_v1_patterns = [
+    path('observations/', include('observations.urls')),
+    path('locations/', include('locations.urls')),
+    path('organizations/', include('organizations.urls')),
+    path('users/', include('users.urls')),
+    path('interventions/', include('interventions.urls')),
+    path('taxonomy/', include('taxonomy.urls')),
+    path('analytics/', include('analytics.urls')),
+    path('surveys/', include('surveys.urls')),
+    path('content/', include('content.urls')),
+]
 
 urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
-    path('api/v1/observations/', include('observations.urls')),
-    path('api/v1/locations/', include('locations.urls')),
-    path('api/v1/organizations/', include('organizations.urls')),
-    path('api/v1/users/', include('users.urls')),
-    path('api/v1/interventions/', include('interventions.urls')),
+    path('api/v1/', include(api_v1_patterns)),
 ]
 urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
     prefix_default_language=False,
 )
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

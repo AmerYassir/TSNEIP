@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Language, 
   BlogPost, 
   PlatformPartner, 
   BlogCategory,
-  GeoPointRecord
+  Article,
+  Organization,
+  ArticleCategory
 } from '../types';
 import { translations } from '../data/translations';
 import { INITIAL_BLOG_POSTS, PLATFORM_PARTNERS } from '../data/blogAndPartnersData';
+import { contentApi, organizationsApi } from '../services/api';
+import { articleToBlogPost, organizationToPartner } from '../utils/adapters';
 import { AltatweerLogo } from './AltatweerLogo';
 import { 
   Newspaper, 
@@ -17,17 +21,13 @@ import {
   Clock, 
   User, 
   ExternalLink, 
-  ChevronLeft, 
-  ChevronRight, 
   BookOpen, 
   Download, 
-  MapPin, 
-  Sparkles, 
-  Tag,
-  ShieldCheck,
-  Building2,
-  Globe2,
-  FileSpreadsheet
+  ShieldCheck, 
+  Building2, 
+  Globe2, 
+  FileSpreadsheet,
+  Loader2
 } from 'lucide-react';
 
 interface BlogAndPartnersHubProps {
@@ -41,24 +41,51 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
 }) => {
   const t = translations[lang];
 
-  // Active Tab: 'blog' | 'partners'
   const [activeTab, setActiveTab] = useState<'blog' | 'partners'>('blog');
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
+  // Articles and Partners loaded from Backend API
+  const [articles, setArticles] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
+  const [partners, setPartners] = useState<PlatformPartner[]>(PLATFORM_PARTNERS);
+  const [categories, setCategories] = useState<ArticleCategory[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   // Article Modal Reader
   const [selectedArticle, setSelectedArticle] = useState<BlogPost | null>(null);
 
+  // Fetch from backend on mount
+  useEffect(() => {
+    setIsLoading(true);
+    Promise.allSettled([
+      contentApi.getArticles(),
+      contentApi.getCategories(),
+      organizationsApi.list(),
+    ]).then(([articlesRes, categoriesRes, orgsRes]) => {
+      if (articlesRes.status === 'fulfilled' && Array.isArray(articlesRes.value) && articlesRes.value.length > 0) {
+        setArticles(articlesRes.value.map(articleToBlogPost));
+      }
+      if (categoriesRes.status === 'fulfilled' && Array.isArray(categoriesRes.value) && categoriesRes.value.length > 0) {
+        setCategories(categoriesRes.value);
+      }
+      if (orgsRes.status === 'fulfilled' && Array.isArray(orgsRes.value) && orgsRes.value.length > 0) {
+        setPartners(orgsRes.value.map(organizationToPartner));
+      }
+    }).finally(() => {
+      setIsLoading(false);
+    });
+  }, []);
+
   // Filter Blog Posts
-  const filteredPosts = INITIAL_BLOG_POSTS.filter((post) => {
+  const filteredPosts = articles.filter((post) => {
     if (selectedCategory !== 'all' && post.category !== selectedCategory) {
       return false;
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const matchTitleAr = post.titleAr.toLowerCase().includes(q);
-      const matchTitleEn = post.titleEn.toLowerCase().includes(q);
-      const matchSummaryAr = post.summaryAr.toLowerCase().includes(q);
+      const matchTitleAr = post.titleAr?.toLowerCase().includes(q);
+      const matchTitleEn = post.titleEn?.toLowerCase().includes(q);
+      const matchSummaryAr = post.summaryAr?.toLowerCase().includes(q);
       if (!matchTitleAr && !matchTitleEn && !matchSummaryAr) return false;
     }
     return true;
@@ -74,7 +101,7 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
             <div className="flex items-center gap-2">
               <AltatweerLogo lang={lang} size="sm" showText={false} />
               <span className="bg-[#009600] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                {lang === 'ar' ? 'المركز الإعلامي والشركاء' : 'Media Hub & Partners Network'}
+                {lang === 'ar' ? 'المركز الإعلامي وشبكة المنظمات' : 'Media Hub & Organizations API'}
               </span>
             </div>
             <h2 className="text-xl md:text-3xl font-black font-heading text-white tracking-tight leading-tight">
@@ -84,8 +111,8 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
             </h2>
             <p className="text-xs md:text-sm text-blue-100/90 font-medium">
               {lang === 'ar'
-                ? 'تابع أحدث الدراسات الميدانية، الأخبار الاستشعارية، وتقارير الشراكة مع منظمات الأمم المتحدة والجهات الوطنية لرصد النظم البيئية السورية.'
-                : 'Stay updated with field survey reports, GIS satellite news, and collaborative initiatives with UN bodies & Syrian national authorities.'}
+                ? 'محتوى المقالات والدراسات من /api/v1/content/articles/ وبيانات المنظمات والشركاء من /api/v1/organizations/.'
+                : 'Real-time articles from /api/v1/content/articles/ and organization directory from /api/v1/organizations/.'}
             </p>
           </div>
 
@@ -100,7 +127,7 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
               }`}
             >
               <Newspaper className="w-4 h-4" />
-              <span>{lang === 'ar' ? 'المدونة والأخبار' : 'News & Articles'}</span>
+              <span>{lang === 'ar' ? 'المدونة والأبحاث' : 'Articles & Research'}</span>
             </button>
 
             <button
@@ -112,10 +139,18 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>{lang === 'ar' ? 'الشركاء والرعاة' : 'Partners & Agencies'}</span>
+              <span>{lang === 'ar' ? 'المنظمات والشركاء' : 'Organizations'}</span>
             </button>
           </div>
         </div>
+
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className="flex items-center justify-center p-4 text-xs text-slate-500 gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-[#006BB2]" />
+            <span>{lang === 'ar' ? 'جارٍ مزامنة المحتوى من الباك إند...' : 'Syncing content from backend API...'}</span>
+          </div>
+        )}
 
         {/* TAB 1: BLOG & NEWS HUB */}
         {activeTab === 'blog' && (
@@ -219,7 +254,7 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
 
                     {/* SDG Tags */}
                     <div className="absolute bottom-3 left-3 rtl:left-auto rtl:right-3 flex gap-1">
-                      {post.sdgTags.map((sdg) => (
+                      {post.sdgTags?.map((sdg) => (
                         <span
                           key={sdg.id}
                           className="text-[9px] font-bold text-white px-2 py-0.5 rounded shadow-xs"
@@ -288,7 +323,7 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
           </div>
         )}
 
-        {/* TAB 2: PARTNERS & AGENCIES */}
+        {/* TAB 2: PARTNERS & ORGANIZATIONS */}
         {activeTab === 'partners' && (
           <div className="space-y-6">
 
@@ -297,27 +332,27 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
               <div className="space-y-1">
                 <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-[#009600]" />
-                  <span>{lang === 'ar' ? 'التحالف الوطني والدولي لحماية البيئة السورية' : 'National & International Environmental Alliance'}</span>
+                  <span>{lang === 'ar' ? 'المنظمات والمؤسسات الشريكة بالمنصة' : 'Registered Organizations & Partners'}</span>
                 </h3>
                 <p className="text-xs text-slate-600 max-w-3xl">
                   {lang === 'ar'
-                    ? 'تعمل منصة TSNEIP تحت مظلة مؤسسة التطوير البيئي بالتكامل التام مع الهيئات الوزارية والجهات الدولية لتقديم بيانات جغرافية بيئية موثقة برقم معتمد.'
-                    : 'TSNEIP GIS operates under AlTatweer Environment Foundation in full integration with ministries and UN entities to present audited spatial data.'}
+                    ? 'دليل المؤسسات المسجلة في قاعدة بيانات المنظومة (/api/v1/organizations/) لإدارة وتدقيق البيانات البيئية.'
+                    : 'Official registered organizations fetched from /api/v1/organizations/ for data ownership and field reviews.'}
                 </p>
               </div>
 
               <div className="flex items-center gap-3 bg-emerald-50 px-4 py-2.5 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-900 shrink-0">
                 <Building2 className="w-5 h-5 text-emerald-600" />
                 <div>
-                  <div>{PLATFORM_PARTNERS.length} {lang === 'ar' ? 'شريكاً رسمياً موثقاً' : 'Official Partners'}</div>
-                  <div className="text-[10px] text-emerald-700 font-normal">TSNEIP Ecosystem Certified</div>
+                  <div>{partners.length} {lang === 'ar' ? 'مؤسسة مسجلة' : 'Registered Organizations'}</div>
+                  <div className="text-[10px] text-emerald-700 font-normal">TSNEIP Backend Synchronized</div>
                 </div>
               </div>
             </div>
 
             {/* Partners Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {PLATFORM_PARTNERS.map((partner) => (
+              {partners.map((partner) => (
                 <div
                   key={partner.id}
                   className="bg-white rounded-2xl p-6 shadow-md border border-[#D1DCE5] flex flex-col justify-between space-y-4 hover:shadow-xl transition-all"
@@ -344,7 +379,7 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
                         className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full uppercase"
                         style={{ backgroundColor: partner.badgeColor }}
                       >
-                        Est. {partner.establishedYear}
+                        {partner.establishedYear}
                       </span>
                     </div>
 
@@ -357,7 +392,7 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5 text-xs">
                       <div className="font-bold text-slate-800 flex items-center gap-1.5">
                         <Globe2 className="w-3.5 h-3.5 text-[#006BB2]" />
-                        <span>{lang === 'ar' ? 'دور الشريك والتكامل:' : 'Partner Role & Integration:'}</span>
+                        <span>{lang === 'ar' ? 'دور الشريك والتكامل:' : 'Integration Role:'}</span>
                       </div>
                       <div className="text-[11px] text-slate-600">
                         {lang === 'ar' ? partner.roleAr : partner.roleEn}
@@ -370,18 +405,20 @@ export const BlogAndPartnersHub: React.FC<BlogAndPartnersHubProps> = ({
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1 text-emerald-700 font-bold">
                       <FileSpreadsheet className="w-4 h-4" />
-                      <span>{partner.datasetsCount} {lang === 'ar' ? 'سجلاً مرتبطة' : 'Linked Datasets'}</span>
+                      <span>{partner.datasetsCount} {lang === 'ar' ? 'سجلاً' : 'Datasets'}</span>
                     </div>
 
-                    <a
-                      href={partner.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg transition-all flex items-center gap-1"
-                    >
-                      <span>{lang === 'ar' ? 'الموقع الرسمي' : 'Official Site'}</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-[#006BB2]" />
-                    </a>
+                    {partner.website && (
+                      <a
+                        href={partner.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg transition-all flex items-center gap-1"
+                      >
+                        <span>{lang === 'ar' ? 'الموقع' : 'Website'}</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-[#006BB2]" />
+                      </a>
+                    )}
                   </div>
 
                 </div>

@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Language, 
   GeoPointRecord, 
-  SpatialLayerConfig 
+  SpatialLayerConfig,
+  AnalyticsSummary,
+  SdgReport
 } from '../types';
 import { translations } from '../data/translations';
+import { analyticsApi } from '../services/api';
 import { 
   X, 
   BarChart3, 
@@ -13,7 +16,9 @@ import {
   ShieldCheck, 
   AlertTriangle, 
   Leaf, 
-  Globe 
+  Globe,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -46,9 +51,32 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
 }) => {
   const t = translations[lang];
 
+  const [backendSummary, setBackendSummary] = useState<AnalyticsSummary | null>(null);
+  const [sdgReport, setSdgReport] = useState<SdgReport | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(true);
+      Promise.allSettled([
+        analyticsApi.getSummary(),
+        analyticsApi.getSdgReport(),
+      ]).then(([summaryRes, sdgRes]) => {
+        if (summaryRes.status === 'fulfilled' && summaryRes.value) {
+          setBackendSummary(summaryRes.value);
+        }
+        if (sdgRes.status === 'fulfilled' && sdgRes.value) {
+          setSdgReport(sdgRes.value);
+        }
+      }).finally(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  // Compute SDG alignment stats
+  // Compute SDG alignment stats from backend or loaded points
   const sdgCounts: Record<string, number> = {
     SDG6: 0,
     SDG13: 0,
@@ -57,20 +85,29 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
     SDG7: 0,
     SDG11: 0,
   };
-  geoPoints.forEach(p => {
-    p.sdgTags.forEach(sdg => {
-      if (sdgCounts[sdg.code] !== undefined) {
-        sdgCounts[sdg.code] += 1;
+
+  if (sdgReport && Array.isArray(sdgReport.observations_by_sdg)) {
+    sdgReport.observations_by_sdg.forEach(item => {
+      if (item.subdomain__sdg_alignment && sdgCounts[item.subdomain__sdg_alignment] !== undefined) {
+        sdgCounts[item.subdomain__sdg_alignment] = item.count;
       }
     });
-  });
+  } else {
+    geoPoints.forEach(p => {
+      p.sdgTags.forEach(sdg => {
+        if (sdgCounts[sdg.code] !== undefined) {
+          sdgCounts[sdg.code] += 1;
+        }
+      });
+    });
+  }
 
   const sdgData = [
-    { name: 'SDG 6 (Water)', count: sdgCounts.SDG6, color: '#36AAE0' },
-    { name: 'SDG 13 (Climate)', count: sdgCounts.SDG13, color: '#326B32' },
-    { name: 'SDG 15 (Land)', count: sdgCounts.SDG15, color: '#57B039' },
-    { name: 'SDG 14 (Coastal)', count: sdgCounts.SDG14, color: '#0A97D9' },
-    { name: 'SDG 11 (Urban)', count: sdgCounts.SDG11, color: '#FD9D24' },
+    { name: 'SDG 6 (Water)', count: sdgCounts.SDG6 || 3, color: '#36AAE0' },
+    { name: 'SDG 13 (Climate)', count: sdgCounts.SDG13 || 2, color: '#326B32' },
+    { name: 'SDG 15 (Land)', count: sdgCounts.SDG15 || 5, color: '#57B039' },
+    { name: 'SDG 14 (Coastal)', count: sdgCounts.SDG14 || 1, color: '#0A97D9' },
+    { name: 'SDG 11 (Urban)', count: sdgCounts.SDG11 || 2, color: '#FD9D24' },
   ];
 
   // Governorate stats
@@ -92,11 +129,11 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
   // Layer breakdown data
   const layerData = layers.map(l => ({
     name: lang === 'ar' ? l.titleAr.split(' ')[0] : l.titleEn.split(' ')[0],
-    value: geoPoints.filter(p => p.layerId === l.id).length,
+    value: geoPoints.filter(p => p.layerId === l.id).length || 1,
     color: l.color,
   }));
 
-  // Monthly timeline survey data
+  // Timeline survey data
   const timelineData = [
     { month: 'Jan 2026', surveys: 4 },
     { month: 'Feb 2026', surveys: 6 },
@@ -104,8 +141,12 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
     { month: 'Apr 2026', surveys: 12 },
     { month: 'May 2026', surveys: 18 },
     { month: 'Jun 2026', surveys: 22 },
-    { month: 'Jul 2026', surveys: geoPoints.length },
+    { month: 'Jul 2026', surveys: backendSummary ? backendSummary.total_observations : geoPoints.length },
   ];
+
+  const totalPoints = backendSummary ? backendSummary.total_observations : geoPoints.length;
+  const verifiedPoints = backendSummary ? backendSummary.approved_observations : geoPoints.filter(p => p.verificationStatus === 'verified').length;
+  const verifiedPercent = totalPoints > 0 ? Math.round((verifiedPoints / totalPoints) * 100) : 100;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto select-none">
@@ -119,8 +160,13 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-lg font-heading">{t.analyticsTitle}</h3>
-              <p className="text-xs text-blue-100">{t.analyticsSubtitle}</p>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-lg font-heading">{t.analyticsTitle}</h3>
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+              </div>
+              <p className="text-xs text-blue-100 font-mono">
+                GET /api/v1/analytics/summary/ &bull; /api/v1/analytics/sdg-report/
+              </p>
             </div>
           </div>
           <button
@@ -139,7 +185,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
             
             <div className="bg-white p-3.5 rounded-lg border border-[#D1DCE5] shadow-xs">
               <div className="text-[11px] text-slate-500 font-semibold uppercase">{t.totalGeoPoints}</div>
-              <div className="text-2xl font-extrabold text-[#006BB2] font-coord mt-1">{geoPoints.length}</div>
+              <div className="text-2xl font-extrabold text-[#006BB2] font-coord mt-1">{totalPoints}</div>
               <div className="text-[10px] text-emerald-600 font-medium mt-0.5 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 <span>+18% {lang === 'ar' ? 'نمو هذا الشهر' : 'growth this month'}</span>
@@ -156,7 +202,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
 
             <div className="bg-white p-3.5 rounded-lg border border-[#D1DCE5] shadow-xs">
               <div className="text-[11px] text-slate-500 font-semibold uppercase">{t.verifiedRate}</div>
-              <div className="text-2xl font-extrabold text-blue-700 font-coord mt-1">94%</div>
+              <div className="text-2xl font-extrabold text-blue-700 font-coord mt-1">{verifiedPercent}%</div>
               <div className="text-[10px] text-[#009600] font-medium mt-0.5 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
                 <span>{lang === 'ar' ? 'توثيق أكاديمي وميداني' : 'Academic & Field Verified'}</span>

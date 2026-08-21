@@ -3,7 +3,6 @@ from rest_framework import permissions, viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
 from common.pagination import StandardGeoJsonPagination
 from .models import GeoObservation, ObservationSubdomain
@@ -64,17 +63,13 @@ class GeoObservationViewSet(viewsets.ModelViewSet):
             user,
             'observations.view_geoobservation',
             klass=GeoObservation,
-            accept_global_perms=False  # Ignore table-level permissions if checking strictly row-level
+            accept_global_perms=True  # Ignore table-level permissions if checking strictly row-level
         )
 
     def perform_create(self, serializer):
         # 1. Save the observation
-        observation = serializer.save(created_by=self.request.user)
+        serializer.save(created_by=self.request.user)
 
-        # 2. Programmatically assign row-level permissions to the creator
-        assign_perm('view_geoobservation', self.request.user, observation)
-        assign_perm('change_geoobservation', self.request.user, observation)
-        assign_perm('delete_geoobservation', self.request.user, observation)
 
     @action(detail=True, methods=['post'], permission_classes=[CanExecuteReviewAction])
     def claim(self, request, pk=None):

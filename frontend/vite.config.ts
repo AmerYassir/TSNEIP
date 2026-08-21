@@ -4,6 +4,11 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  let backendTarget = process.env.BACKEND_URL || process.env.VITE_BACKEND_URL || 'http://backend:8000';
+
+  if (!backendTarget.startsWith('http://') && !backendTarget.startsWith('https://')) {
+    backendTarget = `http://${backendTarget}`;
+  }
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -12,10 +17,26 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      port: 3000,
+      host: '0.0.0.0',
+      proxy: {
+        '/api': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/media': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/static': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+      },
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
   };

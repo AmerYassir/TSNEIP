@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Language, 
   GeoPointRecord, 
@@ -9,6 +9,8 @@ import {
 } from './types';
 import { INITIAL_LAYERS, INITIAL_GEO_POINTS } from './data/mockData';
 import { translations } from './data/translations';
+import { observationsApi, surveysApi } from './services/api';
+import { geoObservationToGeoPoint, formSubmissionToGeoPoint } from './utils/adapters';
 import { Header } from './components/Header';
 import { LayerControlPanel } from './components/LayerControlPanel';
 import { GisMapContainer } from './components/GisMapContainer';
@@ -27,6 +29,8 @@ export default function App() {
 
   const [layers, setLayers] = useState<SpatialLayerConfig[]>(INITIAL_LAYERS);
   const [geoPoints, setGeoPoints] = useState<GeoPointRecord[]>(INITIAL_GEO_POINTS);
+  const [isLoadingBackendData, setIsLoadingBackendData] = useState<boolean>(false);
+  const [backendSyncStatus, setBackendSyncStatus] = useState<'connected' | 'offline'>('connected');
   
   const [filters, setFilters] = useState<MapFilterState>({
     searchQuery: '',
@@ -56,6 +60,72 @@ export default function App() {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
   }, [lang]);
+
+  // Load live data from Django Backend API on Mount
+  const loadBackendSpatialData = useCallback(async () => {
+    setIsLoadingBackendData(true);
+    try {
+      const [obsRes, subsRes] = await Promise.allSettled([
+        observationsApi.list(),
+        surveysApi.getSubmissions(),
+      ]);
+
+      const backendPoints: GeoPointRecord[] = [];
+
+      if (obsRes.status === 'fulfilled') {
+        const obsList = Array.isArray(obsRes.value) ? obsRes.value : (obsRes.value?.results || []);
+        obsList.forEach((obs: any) => {
+          backendPoints.push(geoObservationToGeoPoint(obs));
+        });
+      }
+
+      if (subsRes.status === 'fulfilled') {
+        const subsData = subsRes.value;
+        if (subsData?.type === 'FeatureCollection' && Array.isArray(subsData.features)) {
+          subsData.features.forEach((feat: any) => {
+            const sub = {
+              id: feat.id || feat.properties?.id,
+              form: feat.properties?.form,
+              form_title: feat.properties?.form_title,
+              data: feat.properties?.data || {},
+              location: feat.geometry,
+              status: feat.properties?.status || 'PENDING',
+              submitted_by_username: feat.properties?.submitted_by_username,
+              created_at: feat.properties?.created_at,
+            };
+            backendPoints.push(formSubmissionToGeoPoint(sub));
+          });
+        } else if (Array.isArray(subsData)) {
+          subsData.forEach((sub: any) => {
+            backendPoints.push(formSubmissionToGeoPoint(sub));
+          });
+        }
+      }
+
+      if (backendPoints.length > 0) {
+        // Merge backend points with initial Syrian reference locations (deduping by ID)
+        const idSet = new Set(backendPoints.map(p => p.id));
+        const merged = [
+          ...backendPoints,
+          ...INITIAL_GEO_POINTS.filter(p => !idSet.has(p.id))
+        ];
+        setGeoPoints(merged);
+        setBackendSyncStatus('connected');
+      } else {
+        // Kept initial Syrian geo points for complete preview
+        setBackendSyncStatus('connected');
+      }
+    } catch (err) {
+      console.warn('Backend API connection note:', err);
+      setBackendSyncStatus('offline');
+    } finally {
+      setIsLoadingBackendData(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBackendSpatialData();
+  }, [loadBackendSpatialData]);
 
   const handleLanguageToggle = () => {
     setLang((prev) => (prev === 'ar' ? 'en' : 'ar'));
@@ -174,7 +244,6 @@ export default function App() {
   // Submit new GeoPoint Record
   const handleRecordSubmit = (newRecord: GeoPointRecord) => {
     setGeoPoints((prev) => [newRecord, ...prev]);
-    // Also increment layer count in state
     setLayers((prevLayers) =>
       prevLayers.map((l) =>
         l.id === newRecord.layerId ? { ...l, pointCount: l.pointCount + 1 } : l
@@ -189,7 +258,7 @@ export default function App() {
     setPickedLng(lng);
     setIsMapPickMode(false);
     if (currentView === 'forms') {
-      // Stay on forms
+      // Return to forms
     } else {
       setIsSubmitModalOpen(true);
     }
@@ -326,7 +395,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Center Spatial Map Container (100% full screen by default!) */}
+          {/* Center Spatial Map Container (100% full screen by default) */}
           <GisMapContainer
             lang={lang}
             geoPoints={filteredPoints}
@@ -424,4 +493,3 @@ export default function App() {
     </div>
   );
 }
-
