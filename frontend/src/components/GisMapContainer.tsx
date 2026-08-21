@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { 
   Language, 
-  GeoPointRecord, 
+  Observation, 
   SpatialLayerConfig, 
   BasemapType 
 } from '../types';
@@ -12,24 +12,17 @@ import {
   Maximize2, 
   Flame, 
   Compass, 
-  Ruler, 
-  MapPin, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Clock,
-  Eye,
-  Crosshair,
-  Sparkles,
-  Info
+  Crosshair, 
+  Info 
 } from 'lucide-react';
 
 interface GisMapContainerProps {
   lang: Language;
-  geoPoints: GeoPointRecord[];
+  geoPoints: Observation[];
   layers: SpatialLayerConfig[];
-  selectedPoint: GeoPointRecord | null;
-  onSelectPoint: (point: GeoPointRecord | null) => void;
-  onViewRecordDetails: (point: GeoPointRecord) => void;
+  selectedPoint: Observation | null;
+  onSelectPoint: (point: Observation | null) => void;
+  onViewRecordDetails: (point: Observation) => void;
   isMapPickMode: boolean;
   onCoordinatePicked?: (lat: number, lng: number) => void;
 }
@@ -57,7 +50,6 @@ const BASEMAP_URLS: Record<BasemapType, { url: string; attribution: string }> = 
   },
 };
 
-// Syrian Ecosystem Polygons (Mock coordinates for major basins)
 const SYRIAN_ECOSYSTEM_POLYGONS = [
   {
     nameAr: 'حوض الفرات والاهوار الحراجية',
@@ -133,17 +125,14 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
 
-    // Center on Syria (lat: 34.8, lng: 38.9, zoom 7)
     const map = L.map(mapContainerRef.current, {
       center: [34.8021, 38.9968],
       zoom: 7,
       zoomControl: false,
     });
 
-    // Add Zoom Control at top-right
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Initial Tile Layer
     const tileConfig = BASEMAP_URLS.osm;
     const tiles = L.tileLayer(tileConfig.url, {
       attribution: tileConfig.attribution,
@@ -155,7 +144,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
     polygonsGroupRef.current = L.layerGroup().addTo(map);
     heatGroupRef.current = L.layerGroup().addTo(map);
 
-    // Track mouse coordinates
     map.on('mousemove', (e: L.LeafletMouseEvent) => {
       setCursorCoords({
         lat: Number(e.latlng.lat.toFixed(4)),
@@ -163,7 +151,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
       });
     });
 
-    // Handle map click in pick mode
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (isMapPickMode && onCoordinatePicked) {
         onCoordinatePicked(
@@ -193,7 +180,7 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
     tileLayerRef.current = newTiles;
   }, [currentBasemap]);
 
-  // Render Syrian Ecosystem Boundaries / Polygons
+  // Render Ecosystem Polygons
   useEffect(() => {
     if (!polygonsGroupRef.current) return;
     polygonsGroupRef.current.clearLayers();
@@ -225,21 +212,25 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
     markersGroupRef.current.clearLayers();
     heatGroupRef.current.clearLayers();
 
-    // Map layer color map
     const layerColorMap: Record<string, string> = {};
     layers.forEach((l) => {
-      layerColorMap[l.id] = l.color;
+      layerColorMap[String(l.id)] = l.color;
     });
 
-    // Render Pins
     geoPoints.forEach((point) => {
-      const activeLayer = layers.find((l) => l.id === point.layerId);
-      if (!activeLayer || !activeLayer.active) return; // Skip if layer turned off
+      // Helper to handle PostGIS GeoJSON Point coordinates [lng, lat] vs legacy lat/lng
+      const lat = point.location?.coordinates ? point.location.coordinates[1] : (point as unknown as { lat: number }).lat;
+      const lng = point.location?.coordinates ? point.location.coordinates[0] : (point as unknown as { lng: number }).lng;
 
-      const pinColor = layerColorMap[point.layerId] || '#009600';
+      if (lat === undefined || lng === undefined) return;
+
+      const layerId = point.layer_id || (point as unknown as { layerId: string }).layerId;
+      const activeLayer = layers.find((l) => String(l.id) === String(layerId));
+      if (!activeLayer || !activeLayer.active) return;
+
+      const pinColor = layerColorMap[String(layerId)] || '#009600';
       const isSelected = selectedPoint?.id === point.id;
 
-      // Custom Leaflet DivIcon with Emerald Green (#009600) / Navy Blue (#006BB2) styling
       const customIcon = L.divIcon({
         className: 'custom-leaflet-marker',
         html: `
@@ -259,56 +250,60 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
         iconAnchor: [16, 32],
       });
 
-      const marker = L.marker([point.lat, point.lng], { icon: customIcon });
+      const marker = L.marker([lat, lng], { icon: customIcon });
 
-      // Create Rich Leaflet Popup Card
+      const siteName = lang === 'ar' 
+        ? (point.site_name_ar || (point as unknown as { siteNameAr: string }).siteNameAr)
+        : (point.site_name_en || (point as unknown as { siteNameEn: string }).siteNameEn);
+
+      const status = point.status || (point as unknown as { verificationStatus: string }).verificationStatus;
+      const metrics = point.metrics || {};
+      const sdgTags = point.sdg_tags || (point as unknown as { sdgTags: typeof point.sdg_tags }).sdgTags || [];
+      const collectorName = point.collector_name || (point as unknown as { collectorName: string }).collectorName;
+      const collectedDate = point.collected_date || (point as unknown as { collectedDate: string }).collectedDate;
+
       const popupHtml = `
         <div class="w-72 bg-white rounded-lg shadow-xl overflow-hidden font-sans border border-[#D1DCE5]">
-          <!-- Header Bar -->
           <div class="p-3 text-white flex items-center justify-between" style="background-color: ${pinColor};">
             <div class="flex items-center gap-1.5">
               <span class="text-[10px] font-mono font-bold uppercase bg-white/20 px-1.5 py-0.5 rounded">
-                ${point.id}
+                ${point.record_code || point.id}
               </span>
               <span class="text-xs font-bold text-white uppercase">${point.governorate}</span>
             </div>
             <span class="text-[10px] bg-white text-slate-900 font-extrabold px-1.5 py-0.5 rounded-full uppercase">
-              ${point.verificationStatus === 'verified' ? (lang === 'ar' ? 'موثق' : 'Verified') : (lang === 'ar' ? 'قيد التوثيق' : 'Pending')}
+              ${status === 'approved' || status === 'verified' ? (lang === 'ar' ? 'موثق' : 'Verified') : (lang === 'ar' ? 'قيد التوثيق' : 'Pending')}
             </span>
           </div>
 
-          <!-- Body Info -->
           <div class="p-3 space-y-2 text-slate-800">
             <h4 class="font-extrabold text-sm text-slate-900 leading-snug">
-              ${lang === 'ar' ? point.siteNameAr : point.siteNameEn}
+              ${siteName || 'Ecosystem Point'}
             </h4>
 
             <div class="flex items-center gap-2 text-xs font-mono text-slate-600 bg-slate-50 p-1.5 rounded border border-slate-200">
-              <span>📍 Lat: ${point.lat.toFixed(4)}° N</span>
-              <span>Long: ${point.lng.toFixed(4)}° E</span>
+              <span>📍 Lat: ${lat.toFixed(4)}° N</span>
+              <span>Long: ${lng.toFixed(4)}° E</span>
             </div>
 
-            <!-- Environmental Metrics Summary -->
             <div class="grid grid-cols-2 gap-1.5 text-[11px] bg-emerald-50/60 p-2 rounded border border-emerald-100">
-              ${point.metrics.ndvi ? `<div><span class="text-slate-500">NDVI:</span> <b class="text-emerald-800">${point.metrics.ndvi}</b></div>` : ''}
-              ${point.metrics.waterPh ? `<div><span class="text-slate-500">Water pH:</span> <b class="text-blue-800">${point.metrics.waterPh}</b></div>` : ''}
-              ${point.metrics.biodiversityIndex ? `<div><span class="text-slate-500">Bio Index:</span> <b class="text-emerald-700">${point.metrics.biodiversityIndex}/100</b></div>` : ''}
-              ${point.metrics.ambientTempC ? `<div><span class="text-slate-500">Temp:</span> <b class="text-amber-800">${point.metrics.ambientTempC}°C</b></div>` : ''}
+              ${metrics.ndvi !== undefined ? `<div><span class="text-slate-500">NDVI:</span> <b class="text-emerald-800">${metrics.ndvi}</b></div>` : ''}
+              ${(metrics.water_ph ?? (metrics as unknown as { waterPh: number }).waterPh) !== undefined ? `<div><span class="text-slate-500">Water pH:</span> <b class="text-blue-800">${metrics.water_ph ?? (metrics as unknown as { waterPh: number }).waterPh}</b></div>` : ''}
+              ${(metrics.biodiversity_index ?? (metrics as unknown as { biodiversityIndex: number }).biodiversityIndex) !== undefined ? `<div><span class="text-slate-500">Bio Index:</span> <b class="text-emerald-700">${metrics.biodiversity_index ?? (metrics as unknown as { biodiversityIndex: number }).biodiversityIndex}/100</b></div>` : ''}
+              ${(metrics.ambient_temp_c ?? (metrics as unknown as { ambientTempC: number }).ambientTempC) !== undefined ? `<div><span class="text-slate-500">Temp:</span> <b class="text-amber-800">${metrics.ambient_temp_c ?? (metrics as unknown as { ambientTempC: number }).ambientTempC}°C</b></div>` : ''}
             </div>
 
-            <!-- SDG Tags -->
             <div class="flex flex-wrap gap-1 pt-1">
-              ${point.sdgTags.map(sdg => `
+              ${sdgTags.map(sdg => `
                 <span class="text-[9px] font-bold text-white px-1.5 py-0.5 rounded" style="background-color: ${sdg.color}">
                   ${sdg.code}
                 </span>
               `).join('')}
             </div>
 
-            <!-- Collector & Date -->
             <div class="text-[10px] text-slate-500 pt-1 flex items-center justify-between border-t border-slate-100 mt-2">
-              <span>👤 ${point.collectorName}</span>
-              <span>📅 ${point.collectedDate}</span>
+              <span>👤 ${collectorName || 'Observer'}</span>
+              <span>📅 ${collectedDate || ''}</span>
             </div>
           </div>
         </div>
@@ -322,9 +317,8 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
 
       marker.addTo(markersGroupRef.current!);
 
-      // Heatmap Simulated Circles
       if (showHeatmap) {
-        const heatCircle = L.circle([point.lat, point.lng], {
+        const heatCircle = L.circle([lat, lng], {
           radius: 25000,
           color: pinColor,
           fillColor: pinColor,
@@ -336,7 +330,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
     });
   }, [geoPoints, layers, selectedPoint, showHeatmap, lang]);
 
-  // Center view on Syria
   const handleResetMapFocus = () => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.setView([34.8021, 38.9968], 7, { animate: true });
@@ -345,11 +338,8 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
 
   return (
     <div className="relative w-full h-full flex-1 bg-slate-200 overflow-hidden">
-      
-      {/* Map Target HTML Element */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 
-      {/* Map Mode Banner (If in coordinate pick mode) */}
       {isMapPickMode && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-emerald-600 text-white px-4 py-2 rounded-full shadow-lg font-bold text-xs flex items-center gap-2 animate-bounce border-2 border-white">
           <Crosshair className="w-4 h-4" />
@@ -357,10 +347,7 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
         </div>
       )}
 
-      {/* Top Left Floating Toolbar Overlay */}
       <div className="absolute top-3 left-3 rtl:left-auto rtl:right-3 z-20 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/95 backdrop-blur-md p-1.5 rounded-lg shadow-md border border-[#D1DCE5] text-xs">
-        
-        {/* Basemap Switcher Dropdown */}
         <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded border border-slate-200">
           <Layers className="w-4 h-4 text-[#006BB2]" />
           <select
@@ -376,7 +363,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
           </select>
         </div>
 
-        {/* Heatmap Toggle */}
         <button
           onClick={() => setShowHeatmap(!showHeatmap)}
           className={`px-2.5 py-1 rounded font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -390,7 +376,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
           <span>{t.heatmapToggle}</span>
         </button>
 
-        {/* Boundaries Toggle */}
         <button
           onClick={() => setShowPolygons(!showPolygons)}
           className={`px-2.5 py-1 rounded font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -404,7 +389,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
           <span>{t.boundariesToggle}</span>
         </button>
 
-        {/* Reset View Button */}
         <button
           onClick={handleResetMapFocus}
           className="px-2.5 py-1 bg-[#006BB2] hover:bg-[#005794] text-white rounded font-semibold flex items-center gap-1 transition-all cursor-pointer"
@@ -415,7 +399,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
         </button>
       </div>
 
-      {/* Floating Bottom Coordinates HUD Bar */}
       <div className="absolute bottom-3 right-3 rtl:right-auto rtl:left-3 z-20 bg-slate-900/85 backdrop-blur-md text-white px-3 py-1.5 rounded-md text-[11px] font-coord flex items-center gap-3 shadow-lg border border-slate-700">
         <div className="flex items-center gap-1 text-emerald-400">
           <Crosshair className="w-3.5 h-3.5" />
@@ -435,7 +418,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
         </div>
       </div>
 
-      {/* Map Legend Overlay (Bottom Left) */}
       <div className="hidden md:flex flex-col gap-1.5 absolute bottom-3 left-3 rtl:left-auto rtl:right-3 z-20 bg-white/95 backdrop-blur-md p-2.5 rounded-lg shadow-md border border-[#D1DCE5] text-[11px]">
         <div className="font-bold text-slate-800 text-xs flex items-center gap-1 mb-0.5">
           <Info className="w-3.5 h-3.5 text-[#006BB2]" />
@@ -460,7 +442,6 @@ export const GisMapContainer: React.FC<GisMapContainerProps> = ({
           </div>
         </div>
       </div>
-
     </div>
   );
 };

@@ -110,21 +110,22 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
     { name: 'SDG 11 (Urban)', count: sdgCounts.SDG11 || 2, color: '#FD9D24' },
   ];
 
-  // Governorate stats
-  const govMap: Record<string, { count: number; totalNdvi: number }> = {};
-  geoPoints.forEach(p => {
-    if (!govMap[p.governorate]) {
-      govMap[p.governorate] = { count: 0, totalNdvi: 0 };
-    }
-    govMap[p.governorate].count += 1;
-    govMap[p.governorate].totalNdvi += (p.metrics.ndvi || 0.5);
-  });
+    // Governorate stats
+    const govMap: Record<string, { count: number; totalNdvi: number }> = {};
+    geoPoints.forEach(p => {
+      const gov = p.governorate || 'Unspecified';
+      if (!govMap[gov]) {
+        govMap[gov] = { count: 0, totalNdvi: 0 };
+      }
+      govMap[gov].count += 1;
+      govMap[gov].totalNdvi += p.metrics?.ndvi ?? 0.5;
+    });
 
-  const govData = Object.keys(govMap).map(gov => ({
-    governorate: gov,
-    pointsCount: govMap[gov].count,
-    avgNdvi: Number((govMap[gov].totalNdvi / govMap[gov].count).toFixed(2)),
-  }));
+    const govChartData = Object.keys(govMap).map(gov => ({
+      governorate: gov,
+      pointsCount: govMap[gov].count,
+      avgNdvi: Number((govMap[gov].totalNdvi / govMap[gov].count).toFixed(2)),
+    }));
 
   // Layer breakdown data
   const layerData = layers.map(l => ({
@@ -194,7 +195,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
 
             <div className="bg-white p-3.5 rounded-lg border border-[#D1DCE5] shadow-xs">
               <div className="text-[11px] text-slate-500 font-semibold uppercase">{lang === 'ar' ? 'متوسط مؤشر الغطاء (NDVI)' : 'Avg. NDVI Index'}</div>
-              <div className="text-2xl font-extrabold text-[#009600] font-coord mt-1">0.68</div>
+              <div className="text-2xl font-extrabold text-[#009600] font-coord mt-1">{analyticsData.avgNdvi}</div>
               <div className="text-[10px] text-slate-500 font-medium mt-0.5">
                 {lang === 'ar' ? 'حالة غطاء نباتي جيد' : 'Healthy Canopy Density'}
               </div>
@@ -211,7 +212,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
 
             <div className="bg-white p-3.5 rounded-lg border border-[#D1DCE5] shadow-xs">
               <div className="text-[11px] text-slate-500 font-semibold uppercase">{lang === 'ar' ? 'المناطق الحرجة البيئية' : 'Critical Hotspots'}</div>
-              <div className="text-2xl font-extrabold text-rose-600 font-coord mt-1">2</div>
+              <div className="text-2xl font-extrabold text-rose-600 font-coord mt-1">{analyticsData.criticalHotspots}</div>
               <div className="text-[10px] text-rose-600 font-medium mt-0.5 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
                 <span>{lang === 'ar' ? 'تتطلب تدخلاً عاجلاً' : 'Needs urgent intervention'}</span>
@@ -231,14 +232,14 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
               </h4>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sdgData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={analyticsData.sdgChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1E293B', color: '#fff', borderRadius: '8px', fontSize: '11px' }}
                     />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                      {sdgData.map((entry, index) => (
+                      {analyticsData.sdgChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Bar>
@@ -257,7 +258,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={layerData}
+                      data={analyticsData.layerChartData}
                       cx="50%"
                       cy="50%"
                       outerRadius={70}
@@ -265,7 +266,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                       dataKey="value"
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     >
-                      {layerData.map((entry, index) => (
+                      {analyticsData.layerChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -288,7 +289,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
               </h4>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={govData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                  <BarChart data={analyticsData.govChartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                     <XAxis dataKey="governorate" tick={{ fontSize: 9 }} angle={-25} textAnchor="end" />
                     <YAxis domain={[0, 1]} tick={{ fontSize: 10 }} />
                     <Tooltip />
@@ -306,7 +307,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
               </h4>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart data={analyticsData.timelineChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip />

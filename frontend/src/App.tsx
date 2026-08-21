@@ -23,6 +23,8 @@ import { EcoFormsHub } from './components/EcoFormsHub';
 import { BlogAndPartnersHub } from './components/BlogAndPartnersHub';
 
 export default function App() {
+  const { user, isAuthenticated } = useAuth();
+
   const [lang, setLang] = useState<Language>('ar');
   const [currentView, setCurrentView] = useState<AppView>('map');
   const [isOptionsDrawerOpen, setIsOptionsDrawerOpen] = useState<boolean>(false);
@@ -35,7 +37,7 @@ export default function App() {
   const [filters, setFilters] = useState<MapFilterState>({
     searchQuery: '',
     selectedGovernorate: 'all',
-    selectedLayerIds: INITIAL_LAYERS.map((l) => l.id),
+    selectedLayerIds: [],
     selectedStatus: 'all',
     selectedSdg: 'all',
     threatFilter: 'all',
@@ -55,7 +57,7 @@ export default function App() {
   const [pickedLat, setPickedLat] = useState<number | undefined>(undefined);
   const [pickedLng, setPickedLng] = useState<number | undefined>(undefined);
 
-  // Toggle RTL / LTR document attributes
+  // Document direction & language sync
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
@@ -129,106 +131,86 @@ export default function App() {
 
   const handleLanguageToggle = () => {
     setLang((prev) => (prev === 'ar' ? 'en' : 'ar'));
-  };
+  }, []);
 
-  // Toggle single layer active state
-  const handleToggleLayer = (layerId: LayerId) => {
+  // Layer toggle handler
+  const handleToggleLayer = useCallback((layerId: LayerId) => {
     setLayers((prevLayers) =>
       prevLayers.map((l) =>
         l.id === layerId ? { ...l, active: !l.active } : l
       )
     );
-  };
+  }, []);
 
-  // Filter geo points according to sidebar state
-  const filteredPoints = geoPoints.filter((point) => {
-    // Check if point's layer is active
+  // Memoized Point Filtering Engine
+  const filteredPoints = useMemo(() => {
     const activeLayerIds = layers.filter((l) => l.active).map((l) => l.id);
-    if (!activeLayerIds.includes(point.layerId)) return false;
 
-    // Search query
-    if (filters.searchQuery) {
-      const q = filters.searchQuery.toLowerCase();
-      const matchNameAr = point.siteNameAr.toLowerCase().includes(q);
-      const matchNameEn = point.siteNameEn.toLowerCase().includes(q);
-      const matchId = point.id.toLowerCase().includes(q);
-      const matchGov = point.governorate.toLowerCase().includes(q);
-      if (!matchNameAr && !matchNameEn && !matchId && !matchGov) return false;
+    return geoPoints.filter((point) => {
+      if (!activeLayerIds.includes(point.layerId)) return false;
+
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
+        const matchNameAr = point.siteNameAr?.toLowerCase().includes(q);
+        const matchNameEn = point.siteNameEn?.toLowerCase().includes(q);
+        const matchId = point.id?.toLowerCase().includes(q);
+        const matchGov = point.governorate?.toLowerCase().includes(q);
+        if (!matchNameAr && !matchNameEn && !matchId && !matchGov) return false;
+      }
+
+      if (filters.selectedGovernorate !== 'all' && point.governorate !== filters.selectedGovernorate) {
+        return false;
+      }
+
+      if (filters.selectedStatus !== 'all' && point.verificationStatus !== filters.selectedStatus) {
+        return false;
+      }
+
+      if (filters.selectedSdg !== 'all') {
+        const hasSdg = point.sdgTags?.some((s) => s.code === filters.selectedSdg);
+        if (!hasSdg) return false;
+      }
+
+      if (filters.threatFilter !== 'all' && point.threatLevel !== filters.threatFilter) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [geoPoints, layers, filters]);
+
+  // Memoized derived metrics
+  const verifiedCount = useMemo(
+    () => filteredPoints.filter((p) => p.verificationStatus === 'verified').length,
+    [filteredPoints]
+  );
+
+  const activeLayersCount = useMemo(
+    () => layers.filter((l) => l.active).length,
+    [layers]
+  );
+
+  // Filter Presets
+  const handleApplyPreset = useCallback((presetName: string) => {
+    const presetMap: Record<string, string> = {
+      euphrates: 'Raqqa',
+      barada: 'Rural Damascus',
+      coastal: 'Latakia',
+      badia: 'Homs',
+    };
+
+    if (presetMap[presetName]) {
+      setFilters((prev) => ({
+        ...prev,
+        selectedGovernorate: presetMap[presetName],
+        selectedStatus: 'all',
+        selectedSdg: 'all',
+        searchQuery: '',
+      }));
     }
+  }, []);
 
-    // Governorate
-    if (filters.selectedGovernorate !== 'all' && point.governorate !== filters.selectedGovernorate) {
-      return false;
-    }
-
-    // Status
-    if (filters.selectedStatus !== 'all' && point.verificationStatus !== filters.selectedStatus) {
-      return false;
-    }
-
-    // SDG
-    if (filters.selectedSdg !== 'all') {
-      const hasSdg = point.sdgTags.some((s) => s.code === filters.selectedSdg);
-      if (!hasSdg) return false;
-    }
-
-    // Threat
-    if (filters.threatFilter !== 'all' && point.threatLevel !== filters.threatFilter) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Count active verified points
-  const verifiedCount = filteredPoints.filter((p) => p.verificationStatus === 'verified').length;
-  const activeLayersCount = layers.filter((l) => l.active).length;
-
-  // Handle preset filters
-  const handleApplyPreset = (presetName: string) => {
-    switch (presetName) {
-      case 'euphrates':
-        setFilters((prev) => ({
-          ...prev,
-          selectedGovernorate: 'Raqqa',
-          selectedStatus: 'all',
-          selectedSdg: 'all',
-          searchQuery: '',
-        }));
-        break;
-      case 'barada':
-        setFilters((prev) => ({
-          ...prev,
-          selectedGovernorate: 'Rural Damascus',
-          selectedStatus: 'all',
-          selectedSdg: 'all',
-          searchQuery: '',
-        }));
-        break;
-      case 'coastal':
-        setFilters((prev) => ({
-          ...prev,
-          selectedGovernorate: 'Latakia',
-          selectedStatus: 'all',
-          selectedSdg: 'all',
-          searchQuery: '',
-        }));
-        break;
-      case 'badia':
-        setFilters((prev) => ({
-          ...prev,
-          selectedGovernorate: 'Homs',
-          selectedStatus: 'all',
-          selectedSdg: 'all',
-          searchQuery: '',
-        }));
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleResetFilters = () => {
+  const handleResetFilters = useCallback(() => {
     setFilters({
       searchQuery: '',
       selectedGovernorate: 'all',
@@ -239,7 +221,7 @@ export default function App() {
       dateRange: { start: '', end: '' },
     });
     setLayers((prev) => prev.map((l) => ({ ...l, active: true })));
-  };
+  }, [layers]);
 
   // Submit new GeoPoint Record
   const handleRecordSubmit = (newRecord: GeoPointRecord) => {
@@ -252,8 +234,8 @@ export default function App() {
     setSelectedPoint(newRecord);
   };
 
-  // Handle map pick mode
-  const handleCoordinatePicked = (lat: number, lng: number) => {
+  // Map Coordinate Picker Handlers
+  const handleCoordinatePicked = useCallback((lat: number, lng: number) => {
     setPickedLat(lat);
     setPickedLng(lng);
     setIsMapPickMode(false);
@@ -262,17 +244,17 @@ export default function App() {
     } else {
       setIsSubmitModalOpen(true);
     }
-  };
+  }, [currentView]);
 
-  const handleActivateMapPickerFromForms = () => {
+  const handleActivateMapPickerFromForms = useCallback(() => {
     setCurrentView('map');
     setIsMapPickMode(true);
-  };
+  }, []);
 
-  // Export handlers
-  const handleExportCsv = () => {
+  // Exporters
+  const handleExportCsv = useCallback(() => {
     const headers = ['ID', 'SiteName_AR', 'SiteName_EN', 'Governorate', 'Lat', 'Lng', 'Elevation', 'Layer', 'Status', 'Date'];
-    const rows = filteredPoints.map(p => [
+    const rows = filteredPoints.map((p) => [
       p.id,
       `"${p.siteNameAr}"`,
       `"${p.siteNameEn}"`,
@@ -282,29 +264,28 @@ export default function App() {
       p.elevation,
       p.layerId,
       p.verificationStatus,
-      p.collectedDate
+      p.collectedDate,
     ].join(','));
     
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `TSNEIP_Syria_GeoData_${new Date().toISOString().split('T')[0]}.csv`);
+    link.href = encodeURI(csvContent);
+    link.download = `TSNEIP_Syria_GeoData_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [filteredPoints]);
 
-  const handleExportGeoJson = () => {
+  const handleExportGeoJson = useCallback(() => {
     const geoJsonData = {
       type: 'FeatureCollection',
       name: 'TSNEIP_Syrian_National_Ecosystem_Platform',
       crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:OGC:1.3:CRS84' } },
-      features: filteredPoints.map(p => ({
+      features: filteredPoints.map((p) => ({
         type: 'Feature',
         geometry: {
           type: 'Point',
-          coordinates: [p.lng, p.lat, p.elevation]
+          coordinates: [p.lng, p.lat, p.elevation || 0],
         },
         properties: {
           id: p.id,
@@ -315,45 +296,45 @@ export default function App() {
           verificationStatus: p.verificationStatus,
           collectedDate: p.collectedDate,
           collectorName: p.collectorName,
-          metrics: p.metrics
-        }
-      }))
+          metrics: p.metrics,
+        },
+      })),
     };
 
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(geoJsonData, null, 2));
     const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `TSNEIP_Syria_Spatial_${new Date().toISOString().split('T')[0]}.geojson`);
+    downloadAnchor.href = dataStr;
+    downloadAnchor.download = `TSNEIP_Syria_Spatial_${new Date().toISOString().split('T')[0]}.geojson`;
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.removeChild(downloadAnchor);
-  };
+  }, [filteredPoints]);
 
-  const handleExportKml = () => {
+  const handleExportKml = useCallback(() => {
     const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n<name>TSNEIP Syria National Geo Points</name>`;
     const kmlFooter = `\n</Document>\n</kml>`;
-    const placemarks = filteredPoints.map(p => `
+    const placemarks = filteredPoints.map((p) => `
       <Placemark>
-        <name>${p.siteNameEn} (${p.id})</name>
-        <description>${p.siteNameAr} - Governorate: ${p.governorate}</description>
+        <name>${p.siteNameEn || p.id}</name>
+        <description>${p.siteNameAr || ''} - Governorate: ${p.governorate}</description>
         <Point>
-          <coordinates>${p.lng},${p.lat},${p.elevation}</coordinates>
+          <coordinates>${p.lng},${p.lat},${p.elevation || 0}</coordinates>
         </Point>
       </Placemark>
     `).join('\n');
 
     const kmlContent = 'data:application/vnd.google-earth.kml+xml;charset=utf-8,' + encodeURIComponent(kmlHeader + placemarks + kmlFooter);
-    const a = document.createElement('a');
-    a.href = kmlContent;
-    a.download = `TSNEIP_Syria_${new Date().toISOString().split('T')[0]}.kml`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
+    const link = document.createElement('a');
+    link.href = kmlContent;
+    link.download = `TSNEIP_Syria_${new Date().toISOString().split('T')[0]}.kml`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [filteredPoints]);
 
-  const handleExportPdfReport = () => {
+  const handleExportPdfReport = useCallback(() => {
     window.print();
-  };
+  }, []);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#E3EAEF] text-[#1E293B] overflow-hidden">
@@ -371,14 +352,35 @@ export default function App() {
         totalPointsCount={filteredPoints.length}
         verifiedCount={verifiedCount}
         isOptionsDrawerOpen={isOptionsDrawerOpen}
-        onToggleOptionsDrawer={() => setIsOptionsDrawerOpen(!isOptionsDrawerOpen)}
+        onToggleOptionsDrawer={() => setIsOptionsDrawerOpen((prev) => !prev)}
       />
 
-      {/* Main Workspace: Conditionally render based on currentView */}
+      {/* Offline/API Status Banner */}
+      {apiError && (
+        <div className="bg-amber-100 border-b border-amber-300 text-amber-800 text-xs px-4 py-1 flex justify-between items-center z-40">
+          <span>{apiError}</span>
+          <button 
+            onClick={loadInitialData}
+            className="underline font-medium hover:text-amber-950"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+          <div className="w-10 h-10 border-4 border-[#0F4C81] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-3 text-sm font-medium text-[#0F4C81]">Loading spatial datasets & PostGIS layers...</p>
+        </div>
+      )}
+
+      {/* Main Workspace */}
       {currentView === 'map' && (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           
-          {/* Collapsible Overlay Sidebar Options Panel */}
+          {/* Collapsible Layer Control Options Drawer */}
           {isOptionsDrawerOpen && (
             <div className="absolute top-0 bottom-0 left-0 rtl:left-auto rtl:right-0 z-30 w-full sm:w-80 xl:w-96 shadow-2xl transition-all animate-fade-in">
               <LayerControlPanel
@@ -424,7 +426,7 @@ export default function App() {
         <BlogAndPartnersHub
           lang={lang}
           onSelectMapPoint={(pointId) => {
-            const found = geoPoints.find(p => p.id === pointId);
+            const found = geoPoints.find((p) => p.id === pointId);
             if (found) {
               setSelectedPoint(found);
               setCurrentView('map');
@@ -433,7 +435,7 @@ export default function App() {
         />
       )}
 
-      {/* Bottom Collapsible Synchronized Data Table (Only in Map view) */}
+      {/* Data Drawer Table (Map view) */}
       {currentView === 'map' && (
         <DataDrawerTable
           lang={lang}
@@ -449,7 +451,7 @@ export default function App() {
         />
       )}
 
-      {/* Submit Geo-Data Modal Form */}
+      {/* Geo Data Submission Modal */}
       <GeoDataSubmissionModal
         lang={lang}
         isOpen={isSubmitModalOpen}
@@ -465,7 +467,7 @@ export default function App() {
         pickedLng={pickedLng}
       />
 
-      {/* Spatial Ecosystem Analytics Dashboard */}
+      {/* Analytics Modal */}
       <AnalyticsModal
         lang={lang}
         isOpen={isAnalyticsModalOpen}
@@ -474,14 +476,14 @@ export default function App() {
         layers={layers}
       />
 
-      {/* About Us / Al Tatweer Foundation Information Modal */}
+      {/* About Us Modal */}
       <AboutUsModal
         lang={lang}
         isOpen={isAboutUsModalOpen}
         onClose={() => setIsAboutUsModalOpen(false)}
       />
 
-      {/* Full Record Details Drawer */}
+      {/* Record Details Drawer */}
       <RecordDetailDrawer
         lang={lang}
         record={detailRecord}

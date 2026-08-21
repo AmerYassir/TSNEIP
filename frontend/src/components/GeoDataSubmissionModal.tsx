@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Language, 
-  GeoPointRecord, 
+  Observation, 
   SpatialLayerConfig, 
   ObservationSubdomain,
   MetricReading,
@@ -13,7 +14,6 @@ import { geoObservationToGeoPoint } from '../utils/adapters';
 import { 
   X, 
   MapPin, 
-  Save, 
   Crosshair, 
   Plus, 
   CheckCircle2, 
@@ -28,7 +28,7 @@ interface GeoDataSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   layers: SpatialLayerConfig[];
-  onSubmitRecord: (newRecord: GeoPointRecord) => void;
+  onSubmitRecord: (newRecord: Observation) => void;
   onActivateMapPickMode: () => void;
   pickedLat?: number;
   pickedLng?: number;

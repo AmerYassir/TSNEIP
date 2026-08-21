@@ -3,6 +3,7 @@ import { Language, AppView } from '../types';
 import { translations } from '../data/translations';
 import { AltatweerLogo } from './AltatweerLogo';
 import { HamburgerMenu } from './HamburgerMenu';
+import { useAuth } from '../context/AuthContext';
 import { 
   Globe, 
   PlusCircle, 
@@ -44,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleOptionsDrawer,
 }) => {
   const t = translations[lang];
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <header className="bg-[#006BB2] text-white border-b-2 border-[#005794] shadow-md relative z-30 select-none">
@@ -180,5 +182,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-
-

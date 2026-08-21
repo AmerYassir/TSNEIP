@@ -12,7 +12,6 @@ import { surveysApi } from '../services/api';
 import { formSubmissionToGeoPoint } from '../utils/adapters';
 import { 
   FileText, 
-  Plus, 
   Leaf, 
   Droplets, 
   Trees, 
@@ -21,7 +20,6 @@ import {
   Save, 
   Eye, 
   CheckCircle2, 
-  Download, 
   MapPin, 
   Trash2, 
   Printer,
@@ -37,6 +35,7 @@ interface EcoFormsHubProps {
   onOpenMapPicker: () => void;
   pickedLat?: number;
   pickedLng?: number;
+  apiEndpoint?: string; // Optional custom backend API URL (Defaults to /api/v1/observations/)
 }
 
 const GOVERNORATES: SyrianGovernorate[] = [
@@ -62,6 +61,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
   onOpenMapPicker,
   pickedLat,
   pickedLng,
+  apiEndpoint = '/api/v1/observations/',
 }) => {
   const t = translations[lang];
 
@@ -198,7 +198,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
       .finally(() => setIsLoadingSubmissions(false));
   };
 
-  // Update Lat/Lng if user picked coordinates on the map
+  // Update Lat/Lng when map picker returns new coordinates
   useEffect(() => {
     if (pickedLat !== undefined && pickedLng !== undefined) {
       setLat(pickedLat);
@@ -308,6 +308,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
 
           <div className="flex items-center gap-2 shrink-0 relative z-10 w-full md:w-auto justify-end">
             <button
+              type="button"
               onClick={handleSaveDraft}
               className="px-3.5 py-2 text-xs bg-white/15 hover:bg-white/25 text-white rounded-lg border border-white/25 font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
@@ -316,6 +317,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
             </button>
 
             <button
+              type="button"
               onClick={() => setIsPreviewMode(!isPreviewMode)}
               className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5 shadow-xs cursor-pointer ${
                 isPreviewMode 
@@ -342,6 +344,13 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
           <div className="bg-emerald-50 border-2 border-emerald-500 text-emerald-900 p-4 rounded-xl shadow-md flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
             <div className="text-xs md:text-sm font-bold">{submitSuccessMsg}</div>
+          </div>
+        )}
+
+        {submitError && (
+          <div className="bg-amber-50 border-2 border-amber-500 text-amber-900 p-4 rounded-xl shadow-md flex items-center gap-3 animate-fade-in">
+            <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
+            <div className="text-xs md:text-sm font-bold">{submitError}</div>
           </div>
         )}
 
@@ -444,7 +453,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                     required
                     value={lat}
                     onChange={(e) => setLat(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
+                    className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
                   />
                 </div>
 
@@ -460,7 +469,7 @@ export const EcoFormsHub: React.FC<EcoFormsHubProps> = ({
                     required
                     value={lng}
                     onChange={(e) => setLng(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 text-xs font-coord border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
+                    className="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded focus:ring-2 focus:ring-[#006BB2]"
                   />
                 </div>
               </div>
