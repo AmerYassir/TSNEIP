@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState} from 'react';
 import { Language, AppView } from '../types';
 import { translations } from '../data/translations';
 import { AltatweerLogo } from './AltatweerLogo';
@@ -14,6 +14,9 @@ import {
   SlidersHorizontal,
   Info
 } from 'lucide-react';
+import { LoginModal } from './LoginModal';
+import { LogOut, UserCircle } from 'lucide-react'; // add these to existing lucide imports
+
 
 interface HeaderProps {
   lang: Language;
@@ -46,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const t = translations[lang];
   const { user, isAuthenticated, logout } = useAuth();
-
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   return (
     <header className="bg-[#006BB2] text-white border-b-2 border-[#005794] shadow-md relative z-30 select-none">
       
@@ -132,10 +135,36 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Right Side: Primary Actions */}
+                {/* Right Side: Primary Actions */}
         <div className="flex items-center gap-2">
-          
-          {/* Layer Options Drawer Toggle (Visible in Map View) */}
+          {/* Auth */}
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-blue-100 font-medium hidden md:inline">
+                {user?.first_name || user?.username}
+              </span>
+              <button
+                onClick={logout}
+                className="px-3 py-1.5 text-xs bg-white/15 hover:bg-white/25 text-white rounded-xl border border-white/25 transition-all font-bold flex items-center gap-1.5 cursor-pointer"
+                title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+              >
+                <LogOut className="w-4 h-4 text-rose-300" />
+                <span className="hidden sm:inline">{lang === 'ar' ? 'خروج' : 'Logout'}</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              className="px-3 py-1.5 text-xs bg-white/15 hover:bg-white/25 text-white rounded-xl border border-white/25 transition-all font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <UserCircle className="w-4 h-4 text-emerald-300" />
+              <span className="hidden sm:inline">
+                {t.collectorLogin || (lang === 'ar' ? 'تسجيل الدخول' : 'Login')}
+              </span>
+            </button>
+          )}
+
+          {/* Layer Options Drawer Toggle */}
           {currentView === 'map' && onToggleOptionsDrawer && (
             <button
               onClick={onToggleOptionsDrawer}
@@ -144,7 +173,6 @@ export const Header: React.FC<HeaderProps> = ({
                   ? 'bg-amber-500 text-white border-amber-400' 
                   : 'bg-white/15 hover:bg-white/25 text-white border-white/25'
               }`}
-              title={lang === 'ar' ? 'إظهار/إخفاء خيارات الخريطة' : 'Toggle Map Options'}
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span className="hidden sm:inline">
@@ -165,20 +193,23 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="sm:hidden">{lang === 'ar' ? 'إضافة' : 'Add'}</span>
           </button>
 
-          {/* Language Switcher Button */}
+          {/* Language Switcher */}
           <button
             onClick={onLanguageToggle}
             className="px-3 py-1.5 text-xs bg-white/15 hover:bg-white/25 rounded-xl border border-white/25 transition-all font-bold flex items-center gap-1.5 cursor-pointer"
-            title={lang === 'ar' ? 'تغيير اللغة' : 'Switch Language'}
           >
             <Globe className="w-4 h-4 text-blue-200" />
             <span>{t.languageSwitch}</span>
           </button>
-
         </div>
-
       </div>
 
+      {/* Login Modal — render here at the end, outside all flex rows */}
+      <LoginModal
+        lang={lang}
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </header>
   );
 };

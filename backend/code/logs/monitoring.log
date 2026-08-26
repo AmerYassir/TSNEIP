@@ -665,3 +665,350 @@ LINE 1: SELECT COUNT(*) AS "__count" FROM "surveys_surveyform" WHERE...
 [WARNING] 2026-08-21 15:58:16,879 django.request: Unauthorized: /api/v1/surveys/submissions/
 [WARNING] 2026-08-21 15:58:16,885 django.request: Unauthorized: /api/v1/surveys/forms/
 [WARNING] 2026-08-21 15:58:16,891 django.request: Unauthorized: /api/v1/surveys/forms/
+[INFO] 2026-08-25 12:30:42,724 django.utils.autoreload: Watching for file changes with StatReloader
+[INFO] 2026-08-25 14:05:56,966 django.utils.autoreload: Watching for file changes with StatReloader
+[WARNING] 2026-08-25 19:39:47,389 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 19:39:47,390 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 19:39:47,399 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 19:39:47,400 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 19:41:49,915 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 19:41:49,916 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 19:41:49,927 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 19:41:49,928 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 19:51:02,445 django.request: Not Found: /favicon.ico
+[WARNING] 2026-08-25 20:11:27,396 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:11:27,397 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:11:27,406 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:11:27,407 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:36:23,292 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:36:23,293 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:36:23,308 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:36:23,311 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:40:53,987 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:40:53,989 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:40:53,990 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:40:53,991 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,300 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,301 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,307 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,307 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,312 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,313 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,337 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,338 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,866 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,868 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,884 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,886 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,924 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,926 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:44:56,949 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:44:56,950 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:16,280 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:16,281 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:16,289 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:16,290 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:16,295 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:16,296 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:16,307 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:16,308 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:17,652 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:17,654 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:17,668 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:17,669 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:17,687 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:17,689 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:17,709 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:17,711 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:31,370 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:31,372 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:45:31,381 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:45:31,383 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:51:27,552 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:51:27,553 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:51:27,561 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:51:27,562 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:52:16,523 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:52:16,525 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:52:16,536 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:52:16,537 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:55:09,293 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:55:09,294 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:55:09,307 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:55:09,308 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:55:09,638 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:55:09,639 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:55:09,651 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:55:09,652 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:55:13,106 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:55:13,107 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:55:13,122 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:55:13,124 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:57:31,245 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:57:31,246 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:57:31,255 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:57:31,257 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:57:35,809 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:57:35,810 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:57:35,818 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:57:35,820 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:57:49,306 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:57:49,307 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:57:49,317 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:57:49,318 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:59:00,172 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:59:00,173 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 20:59:00,182 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 20:59:00,184 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:11:24,010 django.request: Bad Request: /api/v1/users/login/
+[WARNING] 2026-08-25 21:13:08,604 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:08,605 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:08,619 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:08,620 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:35,281 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:35,282 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:35,294 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:35,295 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:35,641 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:35,643 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:35,658 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:35,660 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:37,284 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:37,285 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:37,300 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:37,302 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:37,624 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:37,626 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:37,637 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:37,639 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:46,879 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:46,880 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:46,889 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:46,890 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:48,446 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:48,448 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:13:48,457 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:13:48,459 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:14:05,117 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:14:05,118 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:14:05,129 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:14:05,131 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:14:20,541 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:24:29,836 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:24:29,837 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:24:29,851 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:24:29,852 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:30:54,984 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:30:54,985 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:30:55,000 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:30:55,001 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:31:14,745 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:31:14,746 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:31:14,761 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:31:14,763 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:31:34,219 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:31:34,221 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:31:34,231 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:31:34,233 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:02,467 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:02,468 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:02,478 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:02,479 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:09,401 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:09,402 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:09,409 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:09,409 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:18,383 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:18,384 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:18,393 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:18,394 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:52,414 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:52,415 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:52,428 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:52,429 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:58,396 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:58,397 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:36:58,416 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:36:58,417 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:37:00,979 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:37:00,981 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:37:00,990 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:37:00,991 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:42:09,373 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:42:09,375 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:42:09,386 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:42:09,388 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:42:11,452 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:42:11,454 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:42:11,462 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:42:11,464 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:42:14,870 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:42:14,871 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:42:14,884 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:42:14,885 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:49:29,304 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:49:29,307 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:49:29,327 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:49:29,328 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:49:29,791 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:49:29,792 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:49:29,805 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:49:29,805 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:49:54,530 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:49:54,531 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:49:54,546 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:49:54,547 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:50:15,570 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:50:15,571 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:50:15,579 django.request: Unauthorized: /api/v1/observations/
+[WARNING] 2026-08-25 21:50:15,580 django.request: Unauthorized: /api/v1/surveys/submissions/
+[WARNING] 2026-08-25 21:53:47,114 django.request: Unauthorized: /api/v1/users/login/
+[WARNING] 2026-08-25 22:02:02,192 django.request: Not Found: /api/v1/analytics/sdg-report/
+[ERROR] 2026-08-25 22:02:02,209 django.request: Internal Server Error: /api/v1/analytics/summary/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/app/analytics/views.py", line 34, in get
+    from apps.surveys.models import FormSubmission
+ModuleNotFoundError: No module named 'apps'
+[WARNING] 2026-08-25 22:03:38,046 django.request: Method Not Allowed: /api/v1/analytics/summary/
+[ERROR] 2026-08-25 22:03:44,204 django.request: Internal Server Error: /api/v1/analytics/summary/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/app/analytics/views.py", line 34, in get
+    from apps.surveys.models import FormSubmission
+ModuleNotFoundError: No module named 'apps'
+[WARNING] 2026-08-25 22:03:58,950 django.request: Not Found: /analytics/summary/
+[WARNING] 2026-08-25 22:04:24,826 django.request: Forbidden: /api/v1/observations/
+[ERROR] 2026-08-25 22:10:18,009 django.request: Internal Server Error: /api/v1/analytics/summary/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/app/analytics/views.py", line 34, in get
+    from apps.surveys.models import FormSubmission
+ModuleNotFoundError: No module named 'apps'
+[WARNING] 2026-08-25 22:10:51,828 django.request: Not Found: /api/analytics/summary/
+[WARNING] 2026-08-25 22:12:10,316 django.request: Not Found: /api/analytics/
+[WARNING] 2026-08-25 22:12:17,713 django.request: Unauthorized: /api/v1/analytics/
+[WARNING] 2026-08-25 22:12:38,718 django.security.csrf: Forbidden (CSRF cookie not set.): /api/v1/auth/token/refresh/
+[ERROR] 2026-08-25 22:12:54,610 django.request: Internal Server Error: /api/v1/analytics/summary/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/app/analytics/views.py", line 34, in get
+    from apps.surveys.models import FormSubmission
+ModuleNotFoundError: No module named 'apps'
+[WARNING] 2026-08-25 22:13:00,496 django.request: Not Found: /api/v1/analytics/sanp-shots/
+[WARNING] 2026-08-25 22:13:12,040 django.request: Not Found: /api/v1/analytics/snapshots
+[ERROR] 2026-08-25 22:13:32,086 django.request: Internal Server Error: /api/v1/analytics/summary/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/app/analytics/views.py", line 34, in get
+    from apps.surveys.models import FormSubmission
+ModuleNotFoundError: No module named 'apps'
+[WARNING] 2026-08-25 22:14:00,979 django.request: Not Found: /api/v1/analytics/sdg-report/
+[ERROR] 2026-08-25 22:14:00,998 django.request: Internal Server Error: /api/v1/analytics/summary/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/app/analytics/views.py", line 34, in get
+    from apps.surveys.models import FormSubmission
+ModuleNotFoundError: No module named 'apps'

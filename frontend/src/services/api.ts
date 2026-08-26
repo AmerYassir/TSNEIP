@@ -27,9 +27,9 @@ import {
 
 const API_BASE = ((import.meta as any).env?.VITE_API_BASE_URL as string) || '/api/v1';
 
-// Token Storage Keys
-const ACCESS_TOKEN_KEY = 'tsneip_jwt_access';
-const REFRESH_TOKEN_KEY = 'tsneip_jwt_refresh';
+// Token Storage Keys — unified to 'access_token' so api/client.ts can read it
+const ACCESS_TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 const USER_PROFILE_KEY = 'tsneip_user_profile';
 
 export const authStorage = {
@@ -68,7 +68,13 @@ export const authStorage = {
  */
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  
+  console.log('[API Request]', {
+    endpoint,
+    url,
+    hasToken: !!authStorage.getAccessToken(),
+    tokenPreview: authStorage.getAccessToken()?.slice(0, 20) + '...',
+  });
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -152,14 +158,10 @@ async function tryRefreshToken(): Promise<boolean> {
 // 1. Authentication API
 // -------------------------------------------------------------
 export const authApi = {
-  async login(credentials: { username?: string; email?: string; password: string }): Promise<AuthTokens> {
-    const payload = {
-      username: credentials.username || credentials.email,
-      password: credentials.password,
-    };
+  async login(credentials: { email: string; password: string }): Promise<AuthTokens> {
     const data = await request<AuthTokens>('/users/login/', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(credentials),
     });
     authStorage.setAuth(data);
     return data;
@@ -220,7 +222,6 @@ export const observationsApi = {
   async getSubdomains(domain?: string): Promise<ObservationSubdomain[]> {
     const qs = domain ? `?domain=${encodeURIComponent(domain)}` : '';
     const res = await request<any>(`/observations/subdomains/${qs}`);
-    // DRF may return array or paginated object
     if (Array.isArray(res)) return res;
     if (res && Array.isArray(res.results)) return res.results;
     return [];

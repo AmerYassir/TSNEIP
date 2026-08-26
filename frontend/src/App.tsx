@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback ,useMemo} from 'react';
 import { 
   Language, 
   GeoPointRecord, 
@@ -21,6 +21,7 @@ import { AboutUsModal } from './components/AboutUsModal';
 import { RecordDetailDrawer } from './components/RecordDetailDrawer';
 import { EcoFormsHub } from './components/EcoFormsHub';
 import { BlogAndPartnersHub } from './components/BlogAndPartnersHub';
+import { useAuth } from './context/AuthContext';
 
 export default function App() {
   const { user, isAuthenticated } = useAuth();
@@ -43,7 +44,7 @@ export default function App() {
     threatFilter: 'all',
     dateRange: { start: '', end: '' },
   });
-
+  const [apiError, setApiError] = useState<string | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<GeoPointRecord | null>(null);
   const [detailRecord, setDetailRecord] = useState<GeoPointRecord | null>(null);
 
@@ -120,6 +121,7 @@ export default function App() {
     } catch (err) {
       console.warn('Backend API connection note:', err);
       setBackendSyncStatus('offline');
+      setApiError('Failed to load backend data');
     } finally {
       setIsLoadingBackendData(false);
     }
@@ -131,7 +133,7 @@ export default function App() {
 
   const handleLanguageToggle = () => {
     setLang((prev) => (prev === 'ar' ? 'en' : 'ar'));
-  }, []);
+  };
 
   // Layer toggle handler
   const handleToggleLayer = useCallback((layerId: LayerId) => {
@@ -356,25 +358,25 @@ export default function App() {
       />
 
       {/* Offline/API Status Banner */}
-      {apiError && (
+        {(apiError || backendSyncStatus === 'offline') && (
         <div className="bg-amber-100 border-b border-amber-300 text-amber-800 text-xs px-4 py-1 flex justify-between items-center z-40">
-          <span>{apiError}</span>
-          <button 
-            onClick={loadInitialData}
+            <span>{apiError || 'Backend API offline. Displaying cached reference dataset.'}</span>
+            <button 
+            onClick={loadBackendSpatialData}
             className="underline font-medium hover:text-amber-950"
-          >
+            >
             Retry Connection
-          </button>
+            </button>
         </div>
-      )}
+        )}
 
-      {/* Loading Overlay */}
-      {isLoading && (
+        {/* Loading Overlay */}
+        {isLoadingBackendData && (
         <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-          <div className="w-10 h-10 border-4 border-[#0F4C81] border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-3 text-sm font-medium text-[#0F4C81]">Loading spatial datasets & PostGIS layers...</p>
+            <div className="w-10 h-10 border-4 border-[#0F4C81] border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-3 text-sm font-medium text-[#0F4C81]">Loading spatial datasets & PostGIS layers...</p>
         </div>
-      )}
+        )}
 
       {/* Main Workspace */}
       {currentView === 'map' && (

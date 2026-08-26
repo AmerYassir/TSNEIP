@@ -1,5 +1,22 @@
 export const translations = {
   ar: {
+    // Auth & Login
+    loginTitle: "تسجيل الدخول",
+    registerTitle: "إنشاء حساب جديد",
+    username: "اسم المستخدم",
+    email: "البريد الإلكتروني",
+    password: "كلمة المرور",
+    firstName: "الاسم الأول",
+    lastName: "الاسم الأخير",
+    loginButton: "تسجيل الدخول",
+    registerButton: "إنشاء الحساب",
+    logoutButton: "تسجيل الخروج",
+    loginSuccess: "تم تسجيل الدخول بنجاح!",
+    registerSuccess: "تم إنشاء الحساب بنجاح!",
+    fieldRequired: "هذا الحقل مطلوب",
+    invalidEmail: "البريد الإلكتروني غير صالح",
+    passwordMinLength: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+    authError: "فشل المصادقة، يرجى التحقق من بيانات الاعتماد",
     // Header & Branding
     platformTitle: "المنصة الوطنية السورية للنظام البيئي والمعلومات الجغرافية",
     platformAbbr: "TSNEIP — البوابة الجغرافية الوطنية",
@@ -140,6 +157,23 @@ export const translations = {
     statusAudit: "يحتاج معاينة",
   },
   en: {
+    // Auth & Login
+    loginTitle: "Sign In",
+    registerTitle: "Create Account",
+    username: "Username",
+    email: "Email",
+    password: "Password",
+    firstName: "First Name",
+    lastName: "Last Name",
+    loginButton: "Sign In",
+    registerButton: "Create Account",
+    logoutButton: "Logout",
+    loginSuccess: "Login successful!",
+    registerSuccess: "Account created successfully!",
+    fieldRequired: "This field is required",
+    invalidEmail: "Invalid email address",
+    passwordMinLength: "Password must be at least 6 characters",
+    authError: "Authentication failed, please check your credentials",
     // Header & Branding
     platformTitle: "Syrian National Ecosystem & Information Platform",
     platformAbbr: "TSNEIP — Syrian National Geo-Portal",

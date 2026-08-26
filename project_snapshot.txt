@@ -1,0 +1,308 @@
+=== PROJECT STRUCTURE ===
+.
+├── assets
+│   └── tatweer_logo.png
+├── backend
+│   ├── code
+│   │   ├── analytics
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── __init__.py
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── serializers.py
+│   │   │   ├── tests.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── common
+│   │   │   ├── mixins.py
+│   │   │   └── pagination.py
+│   │   ├── config
+│   │   │   ├── asgi.py
+│   │   │   ├── celery.py
+│   │   │   ├── __init__.py
+│   │   │   ├── settings.py
+│   │   │   ├── urls.py
+│   │   │   └── wsgi.py
+│   │   ├── content
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── __init__.py
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── serializers.py
+│   │   │   ├── tests.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── __init__.py
+│   │   ├── interventions
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── filters.py
+│   │   │   ├── __init__.py
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── serializers.py
+│   │   │   ├── tests.py
+│   │   │   ├── translation.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── locale
+│   │   │   └── ar
+│   │   ├── locations
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── __init__.py
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── serializers.py
+│   │   │   ├── tests
+│   │   │   ├── tests.py
+│   │   │   ├── translation.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── logs
+│   │   │   ├── debugging.log
+│   │   │   └── monitoring.log
+│   │   ├── manage.py
+│   │   ├── observations
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── __init__.py
+│   │   │   ├── management
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── permissions.py
+│   │   │   ├── serializers.py
+│   │   │   ├── signals.py
+│   │   │   ├── tests
+│   │   │   ├── tests.py
+│   │   │   ├── translation.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── organizations
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── __init__.py
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── serializers.py
+│   │   │   ├── tests
+│   │   │   ├── tests.py
+│   │   │   ├── translation.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── scripts
+│   │   │   ├── backend_entrypoint.sh
+│   │   │   └── worker_entrypoint.sh
+│   │   ├── static
+│   │   │   ├── admin
+│   │   │   ├── gis
+│   │   │   ├── guardian
+│   │   │   ├── modeltranslation
+│   │   │   └── rest_framework
+│   │   ├── surveys
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── __init__.py
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── serializers.py
+│   │   │   ├── tests.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── taxonomy
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── __init__.py
+│   │   │   ├── migrations
+│   │   │   ├── models.py
+│   │   │   ├── serializers.py
+│   │   │   ├── tests.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── templates
+│   │   │   └── admin
+│   │   └── users
+│   │       ├── admin.py
+│   │       ├── apps.py
+│   │       ├── __init__.py
+│   │       ├── migrations
+│   │       ├── models.py
+│   │       ├── role_matrix.py
+│   │       ├── serializers.py
+│   │       ├── tests.py
+│   │       ├── urls.py
+│   │       └── views.py
+│   ├── Dockerfile
+│   ├── pyproject.toml
+│   └── requirements.txt
+├── backend.zip
+├── compose.yaml
+├── frontend
+│   ├── bun.lock
+│   ├── Dockerfile
+│   ├── index.html
+│   ├── package.json
+│   ├── src
+│   │   ├── api
+│   │   │   ├── analytics.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── client.ts
+│   │   │   ├── ecoForms.ts
+│   │   │   ├── layers.ts
+│   │   │   ├── observations.ts
+│   │   │   └── types.ts
+│   │   ├── App.tsx
+│   │   ├── components
+│   │   │   ├── AboutUsModal.tsx
+│   │   │   ├── AltatweerLogo.tsx
+│   │   │   ├── AnalyticsModal.tsx
+│   │   │   ├── BlogAndPartnersHub.tsx
+│   │   │   ├── DataDrawerTable.tsx
+│   │   │   ├── EcoFormsHub.tsx
+│   │   │   ├── GeoDataSubmissionModal.tsx
+│   │   │   ├── GisMapContainer.tsx
+│   │   │   ├── HamburgerMenu.tsx
+│   │   │   ├── Header.tsx
+│   │   │   ├── LayerControlPanel.tsx
+│   │   │   ├── LoginModal.tsx
+│   │   │   └── RecordDetailDrawer.tsx
+│   │   ├── context
+│   │   │   └── AuthContext.tsx
+│   │   ├── data
+│   │   │   ├── blogAndPartnersData.ts
+│   │   │   ├── mockData.ts
+│   │   │   └── translations.ts
+│   │   ├── hooks
+│   │   │   └── useObservations.ts
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   ├── pages
+│   │   ├── services
+│   │   │   └── api.ts
+│   │   ├── types.ts
+│   │   └── utils
+│   │       └── adapters.ts
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── LICENSE
+├── project_content.txt
+├── project_snapshot.txt
+├── README.md
+└── tatweer_logo.png
+
+50 directories, 142 files
+
+=== COMPOSE CONFIG ===
+services:
+  frontend:
+    build: ./frontend
+    image: frontend-app:latest
+    pull_policy: build
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src:z
+
+  backend:
+    build: ./backend
+    image: backend-app:latest
+    pull_policy: build
+    volumes:
+      - ./backend/code:/app:z
+    entrypoint: /app/scripts/backend_entrypoint.sh
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery_worker:
+    image: backend-app:latest
+    volumes:
+      - ./backend/code:/app:z
+    entrypoint: /app/scripts/worker_entrypoint.sh
+    command: python -m celery -A config worker -l info
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  db:
+    image: postgis/postgis:16-3.4
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+
+=== VITE CONFIG ===
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import {defineConfig} from 'vite';
+
+export default defineConfig(() => {
+  let backendTarget = process.env.BACKEND_URL || process.env.VITE_BACKEND_URL || 'http://backend:8000';
+
+  if (!backendTarget.startsWith('http://') && !backendTarget.startsWith('https://')) {
+    backendTarget = `http://${backendTarget}`;
+  }
+  return {
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
+    },
+    server: {
+      port: 3000,
+      host: '0.0.0.0',
+      proxy: {
+        '/api': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/media': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/static': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+      hmr: process.env.DISABLE_HMR !== 'true',
+      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+  };
+});

@@ -5,6 +5,8 @@ from django.core.cache import cache
 from django.db.models import Count, Avg, Q
 from .models import AnalyticsSnapshot
 from .serializers import AnalyticsSnapshotSerializer, LiveAnalyticsSummarySerializer
+from ..surveys.models import FormSubmission
+from ..observations.models import Observation
 
 
 class AnalyticsSnapshotViewSet(viewsets.ReadOnlyModelViewSet):
@@ -31,10 +33,8 @@ class LiveAnalyticsSummaryView(APIView):
             return Response(cached_data)
 
         # Deferred dynamic import to avoid circular dependencies
-        from apps.surveys.models import FormSubmission
         # Assuming Observation model exists in apps.observations
         try:
-            from apps.observations.models import Observation
             total_obs = Observation.objects.count()
             verified_obs = Observation.objects.filter(status='verified').count()
             verified_rate = round((verified_obs / total_obs * 100), 2) if total_obs > 0 else 0.0
